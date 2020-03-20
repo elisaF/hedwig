@@ -8,6 +8,7 @@ class EvaluatorFactory(object):
     """
     evaluator_map = {
         'Reuters': ClassificationEvaluator,
+        'CongressionalHearing': ClassificationEvaluator,
         'AAPD': ClassificationEvaluator,
         'IMDB': ClassificationEvaluator,
         'Yelp2014': ClassificationEvaluator,

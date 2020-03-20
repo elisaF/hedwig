@@ -8,6 +8,7 @@ class TrainerFactory(object):
     """
     trainer_map = {
         'Reuters': ClassificationTrainer,
+        'CongressionalHearing': ClassificationTrainer,
         'AAPD': ClassificationTrainer,
         'IMDB': ClassificationTrainer,
         'Yelp2014': ClassificationTrainer,
