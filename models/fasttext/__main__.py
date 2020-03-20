@@ -11,6 +11,7 @@ from common.train import TrainerFactory
 from datasets.aapd import AAPD
 from datasets.imdb import IMDB
 from datasets.reuters import ReutersBOW
+from datasets.congressional_hearing import CongressionalhHearingBOW
 from datasets.yelp2014 import Yelp2014
 from models.fasttext.args import get_args
 from models.fasttext.model import FastText
@@ -66,6 +67,7 @@ if __name__ == '__main__':
 
     dataset_map = {
         'Reuters': ReutersBOW,
+        'CongressionalHearing': CongressionalhHearingBOW,
         'AAPD': AAPD,
         'IMDB': IMDB,
         'Yelp2014': Yelp2014

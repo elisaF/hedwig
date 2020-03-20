@@ -12,6 +12,7 @@ from datasets.bert_processors.aapd_processor import AAPDProcessor
 from datasets.bert_processors.agnews_processor import AGNewsProcessor
 from datasets.bert_processors.imdb_processor import IMDBProcessor
 from datasets.bert_processors.reuters_processor import ReutersProcessor
+from datasets.bert_processors.congressional_hearing_processor import CongressionalHearingProcessor
 from datasets.bert_processors.sogou_processor import SogouProcessor
 from datasets.bert_processors.sst_processor import SST2Processor
 from datasets.bert_processors.yelp2014_processor import Yelp2014Processor
@@ -46,6 +47,7 @@ if __name__ == '__main__':
     dataset_map = {
         'SST-2': SST2Processor,
         'Reuters': ReutersProcessor,
+        'CongressionalHearing': CongressionalHearingProcessor,
         'IMDB': IMDBProcessor,
         'AAPD': AAPDProcessor,
         'AGNews': AGNewsProcessor,

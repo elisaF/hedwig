@@ -12,6 +12,7 @@ from common.train import TrainerFactory
 from datasets.aapd import AAPDHierarchical as AAPD
 from datasets.imdb import IMDBHierarchical as IMDB
 from datasets.reuters import ReutersHierarchical as Reuters
+from datasets.congressional_hearing import CongressionalHearingHierarchical as CongressionalHearing
 from datasets.yelp2014 import Yelp2014Hierarchical as Yelp2014
 from models.han.args import get_args
 from models.han.model import HAN
