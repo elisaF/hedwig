@@ -11,6 +11,7 @@ from common.train import TrainerFactory
 from datasets.aapd import AAPDCharQuantized as AAPD
 from datasets.imdb import IMDBCharQuantized as IMDB
 from datasets.reuters import ReutersCharQuantized as Reuters
+from datasets.congressional_hearing import CongressionalHearingCharQuantized as CongressionalHearing
 from datasets.yelp2014 import Yelp2014CharQuantized as Yelp2014
 from models.char_cnn.args import get_args
 from models.char_cnn.model import CharCNN

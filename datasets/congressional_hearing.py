@@ -10,32 +10,7 @@ from torchtext.data import NestedField, Field, TabularDataset
 from torchtext.data.iterator import BucketIterator
 from torchtext.vocab import Vectors
 
-csv.field_size_limit(sys.maxsize)
-
-
-def clean_string(string):
-    """
-    Performs tokenization and string cleaning for the Congressional Hearings dataset
-    """
-    string = re.sub(r"[^A-Za-z0-9(),!?\'`]", " ", string)
-    string = re.sub(r"\s{2,}", " ", string)
-    return string.lower().strip().split()
-
-
-def split_sents(string):
-    string = re.sub(r"[!?]"," ", string)
-    return string.strip().split('.')
-
-
-def generate_ngrams(tokens, n=2):
-    n_grams = zip(*[tokens[i:] for i in range(n)])
-    tokens.extend(['-'.join(x) for x in n_grams])
-    return tokens
-
-
-def load_json(string):
-    split_val = json.loads(string)
-    return np.asarray(split_val, dtype=np.float32)
+from datasets.reuters import clean_string, split_sents, process_labels, generate_ngrams
 
 
 def char_quantize(string, max_length=1000):
@@ -45,13 +20,6 @@ def char_quantize(string, max_length=1000):
         return quantized_string[:max_length]
     else:
         return np.concatenate((quantized_string, np.zeros((max_length - len(quantized_string), len(CongressionalHearingCharQuantized.ALPHABET)), dtype=np.float32)))
-
-
-def process_labels(string):
-    """
-    Returns the label string as a list of integers
-    """
-    return [float(x) for x in string]
 
 
 class CongressionalHearing(TabularDataset):
@@ -97,7 +65,7 @@ class CongressionalHearing(TabularDataset):
                                      sort_within_batch=True, device=device)
 
 
-class CongressionalHearingsBOW(CongressionalHearing):
+class CongressionalHearingBOW(CongressionalHearing):
     TEXT_FIELD = Field(batch_first=True, tokenize=clean_string, preprocessing=generate_ngrams, include_lengths=True)
 
 

@@ -80,6 +80,7 @@ if __name__ == '__main__':
 
     dataset_map = {
         'Reuters': Reuters,
+        'CongressionalHearing': CongressionalHearing,
         'AAPD': AAPD,
         'IMDB': IMDB,
         'Yelp2014': Yelp2014
