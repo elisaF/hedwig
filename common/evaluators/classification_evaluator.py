@@ -63,5 +63,5 @@ class ClassificationEvaluator(Evaluator):
             # Temporal averaging
             self.model.load_params(old_params)
 
-        return [accuracy, precision, recall, f1, avg_loss, cm], \
+        return [accuracy, precision, recall, f1, avg_loss, cm.tolist()], \
                ['accuracy', 'precision', 'recall', 'f1', 'cross_entropy_loss', 'confusion_matrix']

@@ -1,5 +1,5 @@
+import json
 import random
-import time
 
 import numpy as np
 import torch
@@ -19,22 +19,30 @@ from datasets.bert_processors.yelp2014_processor import Yelp2014Processor
 from models.bert.args import get_args
 
 
-def evaluate_split(model, processor, tokenizer, args, split='dev'):
+def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
     evaluator = BertEvaluator(model, processor, tokenizer, args, split)
-    accuracy, precision, recall, f1, avg_loss = evaluator.get_scores(silent=True)[0]
+    scores, score_names = evaluator.get_scores(silent=True)
+    accuracy, precision, recall, f1, avg_loss, _ = scores
     print('\n' + LOG_HEADER)
     print(LOG_TEMPLATE.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
 
+    scores_dict = dict(zip(score_names, scores))
+    with open(save_file, 'w') as f:
+        f.write(json.dumps(scores_dict))
 
 if __name__ == '__main__':
     # Set default configuration in args.py
     args = get_args()
+    print('Args: ', args)
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
     n_gpu = torch.cuda.device_count()
 
     print('Device:', str(device).upper())
     print('Number of GPUs:', n_gpu)
     print('FP16:', args.fp16)
+
+    metrics_dev_json = args.metrics_json + '_dev'
+    metrics_test_json = args.metrics_json + '_test'
 
     # Set random seed for reproducibility
     random.seed(args.seed)
@@ -139,6 +147,6 @@ if __name__ == '__main__':
         model.load_state_dict(state)
         model = model.to(device)
 
-    evaluate_split(model, processor, tokenizer, args, split='dev')
-    evaluate_split(model, processor, tokenizer, args, split='test')
+    evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
+    evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
 

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import random
@@ -46,23 +47,31 @@ def get_logger():
     return logger
 
 
-def evaluate_dataset(split_name, dataset_cls, model, embedding, loader, batch_size, device, is_multilabel):
+def evaluate_dataset(split_name, dataset_cls, model, embedding, loader, batch_size, device, is_multilabel, save_file):
     saved_model_evaluator = EvaluatorFactory.get_evaluator(dataset_cls, model, embedding, loader, batch_size, device)
     if hasattr(saved_model_evaluator, 'is_multilabel'):
         saved_model_evaluator.is_multilabel = is_multilabel
     if hasattr(saved_model_evaluator, 'ignore_lengths'):
         saved_model_evaluator.ignore_lengths = True
 
-    scores, metric_names = saved_model_evaluator.get_scores()
+    scores, score_names = saved_model_evaluator.get_scores(silent=True)
     print('Evaluation metrics for', split_name)
-    print(metric_names)
+    print(score_names)
     print(scores)
+
+    scores_dict = dict(zip(score_names, scores))
+    with open(save_file, 'w') as f:
+        f.write(json.dumps(scores_dict))
 
 
 if __name__ == '__main__':
     # Set default configuration in args.py
     args = get_args()
+    print('Args: ', args)
     logger = get_logger()
+
+    metrics_dev_json = args.metrics_json + '_dev'
+    metrics_test_json = args.metrics_json + '_test'
 
     # Set random seed for reproducibility
     torch.manual_seed(args.seed)
@@ -169,7 +178,7 @@ if __name__ == '__main__':
 
     evaluate_dataset('dev', dataset_map[args.dataset], model, None, dev_iter, args.batch_size,
                      is_multilabel=dataset_class.IS_MULTILABEL,
-                     device=args.gpu)
+                     device=args.gpu, save_file=metrics_dev_json)
     evaluate_dataset('test', dataset_map[args.dataset], model, None, test_iter, args.batch_size,
                      is_multilabel=dataset_class.IS_MULTILABEL,
-                     device=args.gpu)
+                     device=args.gpu, save_file=metrics_test_json)

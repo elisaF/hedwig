@@ -1,3 +1,4 @@
+import json
 import os
 import random
 
@@ -22,21 +23,29 @@ LOG_HEADER = 'Split  Dev/Acc.  Dev/Pr.  Dev/Re.   Dev/F1   Dev/Loss'
 LOG_TEMPLATE = ' '.join('{:>5s},{:>9.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
 
 
-def evaluate_split(model, vectorizer, processor, args, split='dev'):
+def evaluate_split(model, vectorizer, processor, args, save_file, split='dev'):
     evaluator = BagOfWordsEvaluator(model, vectorizer, processor, args, split)
-    accuracy, precision, recall, f1, avg_loss = evaluator.get_scores(silent=True)[0]
+    scores, score_names = evaluator.get_scores(silent=True)
+    accuracy, precision, recall, f1, avg_loss, _ = scores
     print('\n' + LOG_HEADER)
     print(LOG_TEMPLATE.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
 
+    scores_dict = dict(zip(score_names, scores))
+    with open(save_file, 'w') as f:
+        f.write(json.dumps(scores_dict))
 
 if __name__ == '__main__':
     # Set default configuration in args.py
     args = get_args()
+    print('Args: ', args)
     n_gpu = torch.cuda.device_count()
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
 
     print('Number of GPUs:', n_gpu)
     print('Device:', str(device).upper())
+
+    metrics_dev_json = args.metrics_json + '_dev'
+    metrics_test_json = args.metrics_json+'_test'
 
     # Set random seed for reproducibility
     random.seed(args.seed)
@@ -90,5 +99,5 @@ if __name__ == '__main__':
         model = torch.load(args.trained_model, map_location=lambda storage, location: storage)
         model = model.to(device)
 
-    evaluate_split(model, vectorizer, processor, args, split='dev')
-    evaluate_split(model, vectorizer, processor, args, split='test')
+    evaluate_split(model, vectorizer, processor, args, metrics_dev_json, split='dev')
+    evaluate_split(model, vectorizer, processor, args, metrics_test_json, split='test')

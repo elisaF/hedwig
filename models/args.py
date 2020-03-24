@@ -14,5 +14,5 @@ def get_args():
     parser.add_argument('--patience', type=int, default=5)
     parser.add_argument('--log-every', type=int, default=10)
     parser.add_argument('--data-dir', default=os.path.join(os.pardir, 'hedwig-data', 'datasets'))
-
+    parser.add_argument('--metrics_json', default='metrics.json')
     return parser

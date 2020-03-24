@@ -128,5 +128,5 @@ class RelevanceTransferEvaluator(object):
             # Handle cases without positive labels
             precision = 0
 
-        return [accuracy, precision, average_precision, f1, avg_loss, cm], \
+        return [accuracy, precision, average_precision, f1, avg_loss, cm.tolist()], \
                ['accuracy', 'precision', 'average_precision', 'f1', 'cross_entropy_loss', 'confusion_matrix']
