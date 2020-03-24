@@ -134,7 +134,7 @@ class RelevanceTransferTrainer(object):
                 self.train_epoch()
 
                 # Evaluate performance on validation set
-                dev_acc, dev_precision, dev_ap, dev_f1, dev_loss = self.dev_evaluator.get_scores()[0]
+                dev_acc, dev_precision, dev_ap, dev_f1, dev_loss, cm = self.dev_evaluator.get_scores()[0]
                 tqdm.write(self.log_header)
                 tqdm.write(self.log_template.format(epoch, self.iterations, epoch, epochs,
                                                     dev_acc, dev_precision, dev_ap, dev_f1, dev_loss))

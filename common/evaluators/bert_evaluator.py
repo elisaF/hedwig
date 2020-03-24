@@ -87,10 +87,12 @@ class BertEvaluator(object):
             nb_eval_steps += 1
 
         predicted_labels, target_labels = np.array(predicted_labels), np.array(target_labels)
+        cm = metrics.multilabel_confusion_matrix(target_labels, predicted_labels)
         accuracy = metrics.accuracy_score(target_labels, predicted_labels)
         precision = metrics.precision_score(target_labels, predicted_labels, average='micro')
         recall = metrics.recall_score(target_labels, predicted_labels, average='micro')
         f1 = metrics.f1_score(target_labels, predicted_labels, average='micro')
         avg_loss = total_loss / nb_eval_steps
 
-        return [accuracy, precision, recall, f1, avg_loss], ['accuracy', 'precision', 'recall', 'f1', 'avg_loss']
+        return [accuracy, precision, recall, f1, avg_loss, cm], \
+               ['accuracy', 'precision', 'recall', 'f1', 'avg_loss', 'confusion_matrix']

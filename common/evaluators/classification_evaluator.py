@@ -52,6 +52,7 @@ class ClassificationEvaluator(Evaluator):
 
         predicted_labels = np.array(predicted_labels)
         target_labels = np.array(target_labels)
+        cm = metrics.multilabel_confusion_matrix(target_labels, predicted_labels)
         accuracy = metrics.accuracy_score(target_labels, predicted_labels)
         precision = metrics.precision_score(target_labels, predicted_labels, average='micro')
         recall = metrics.recall_score(target_labels, predicted_labels, average='micro')
@@ -62,4 +63,5 @@ class ClassificationEvaluator(Evaluator):
             # Temporal averaging
             self.model.load_params(old_params)
 
-        return [accuracy, precision, recall, f1, avg_loss], ['accuracy', 'precision', 'recall', 'f1', 'cross_entropy_loss']
+        return [accuracy, precision, recall, f1, avg_loss, cm], \
+               ['accuracy', 'precision', 'recall', 'f1', 'cross_entropy_loss', 'confusion_matrix']

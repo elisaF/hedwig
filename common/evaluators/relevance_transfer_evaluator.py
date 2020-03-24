@@ -116,6 +116,7 @@ class RelevanceTransferEvaluator(object):
 
         predicted_labels = np.around(np.array(self.y_pred))
         target_labels = np.array(self.y_target)
+        cm = metrics.multilabel_confusion_matrix(target_labels, predicted_labels)
         accuracy = metrics.accuracy_score(target_labels, predicted_labels)
         average_precision = metrics.average_precision_score(target_labels, predicted_labels, average=None)
         f1 = metrics.f1_score(target_labels, predicted_labels, average='macro')
@@ -127,5 +128,5 @@ class RelevanceTransferEvaluator(object):
             # Handle cases without positive labels
             precision = 0
 
-        return [accuracy, precision, average_precision, f1, avg_loss], \
-               ['accuracy', 'precision', 'average_precision', 'f1', 'cross_entropy_loss']
+        return [accuracy, precision, average_precision, f1, avg_loss, cm], \
+               ['accuracy', 'precision', 'average_precision', 'f1', 'cross_entropy_loss', 'confusion_matrix']

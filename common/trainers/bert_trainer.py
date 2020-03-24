@@ -105,13 +105,13 @@ class BertTrainer(object):
         for epoch in trange(int(self.args.epochs), desc="Epoch"):
             self.train_epoch(train_dataloader)
             dev_evaluator = BertEvaluator(self.model, self.processor, self.tokenizer, self.args, split='dev')
-            dev_acc, dev_precision, dev_recall, dev_f1, dev_loss = dev_evaluator.get_scores()[0]
+            dev_acc, dev_precision, dev_recall, dev_f1, dev_loss, cm = dev_evaluator.get_scores()[0]
 
             # Print validation results
             tqdm.write(self.log_header)
             tqdm.write(self.log_template.format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
                                                 dev_acc, dev_precision, dev_recall, dev_f1, dev_loss))
-
+            
             # Update validation results
             if dev_f1 > self.best_dev_f1:
                 self.unimproved_iters = 0

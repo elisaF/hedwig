@@ -3,7 +3,7 @@ import time
 
 import numpy as np
 import torch
-from transformers import AdamW, BertForSequenceClassification, BertTokenizer, WarmupLinearSchedule
+from transformers import AdamW, RobertaForSequenceClassification, RobertaTokenizer, WarmupLinearSchedule
 
 from common.constants import *
 from common.evaluators.bert_evaluator import BertEvaluator
@@ -21,7 +21,7 @@ from models.bert.args import get_args
 
 def evaluate_split(model, processor, tokenizer, args, split='dev'):
     evaluator = BertEvaluator(model, processor, tokenizer, args, split)
-    accuracy, precision, recall, f1, avg_loss, cm = evaluator.get_scores(silent=True)[0]
+    accuracy, precision, recall, f1, avg_loss = evaluator.get_scores(silent=True)[0]
     print('\n' + LOG_HEADER)
     print(LOG_TEMPLATE.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     processor = dataset_map[args.dataset]()
     #pretrained_vocab_path = PRETRAINED_VOCAB_ARCHIVE_MAP[args.model]
     pretrained_vocab_path = args.model
-    tokenizer = BertTokenizer.from_pretrained(pretrained_vocab_path)
+    tokenizer = RobertaTokenizer.from_pretrained(pretrained_vocab_path)
 
     train_examples = None
     num_train_optimization_steps = None
@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
     #pretrained_model_path = args.model if os.path.isfile(args.model) else PRETRAINED_MODEL_ARCHIVE_MAP[args.model]
     pretrained_model_path = args.model
-    model = BertForSequenceClassification.from_pretrained(pretrained_model_path, num_labels=args.num_labels)
+    model = RobertaForSequenceClassification.from_pretrained(pretrained_model_path, num_labels=args.num_labels)
 
     if args.fp16:
         model.half()
@@ -130,7 +130,7 @@ if __name__ == '__main__':
         model = torch.load(trainer.snapshot_path)
 
     else:
-        model = BertForSequenceClassification.from_pretrained(pretrained_model_path, num_labels=args.num_labels)
+        model = RobertaForSequenceClassification.from_pretrained(pretrained_model_path, num_labels=args.num_labels)
         model_ = torch.load(args.trained_model, map_location=lambda storage, loc: storage)
         state = {}
         for key in model_.state_dict().keys():
