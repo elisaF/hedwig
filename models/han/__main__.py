@@ -54,7 +54,7 @@ def evaluate_dataset(split_name, dataset_cls, model, embedding, loader, batch_si
     if hasattr(saved_model_evaluator, 'ignore_lengths'):
         saved_model_evaluator.ignore_lengths = True
 
-    scores, score_names = saved_model_evaluator.get_scores(silent=True)
+    scores, score_names = saved_model_evaluator.get_scores()
     print('Evaluation metrics for', split_name)
     print(score_names)
     print(scores)
