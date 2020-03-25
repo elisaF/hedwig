@@ -54,14 +54,29 @@ class ClassificationEvaluator(Evaluator):
         target_labels = np.array(target_labels)
         cm = metrics.multilabel_confusion_matrix(target_labels, predicted_labels)
         accuracy = metrics.accuracy_score(target_labels, predicted_labels)
-        precision = metrics.precision_score(target_labels, predicted_labels, average='micro')
-        recall = metrics.recall_score(target_labels, predicted_labels, average='micro')
-        f1 = metrics.f1_score(target_labels, predicted_labels, average='micro')
+
+        precision_micro = metrics.precision_score(target_labels, predicted_labels, average='micro')
+        recall_micro = metrics.recall_score(target_labels, predicted_labels, average='micro')
+        f1_micro = metrics.f1_score(target_labels, predicted_labels, average='micro')
+
+        precision_macro = metrics.precision_score(target_labels, predicted_labels, average='macro')
+        recall_macro = metrics.recall_score(target_labels, predicted_labels, average='macro')
+        f1_macro = metrics.f1_score(target_labels, predicted_labels, average='macro')
+
+        precision_class, recall_class, f1_class, support_class = metrics.precision_recall_fscore_support(target_labels, predicted_labels)
+
         avg_loss = total_loss / len(self.data_loader.dataset.examples)
 
         if hasattr(self.model, 'beta_ema') and self.model.beta_ema > 0:
             # Temporal averaging
             self.model.load_params(old_params)
 
-        return [accuracy, precision, recall, f1, avg_loss, cm.tolist()], \
-               ['accuracy', 'precision', 'recall', 'f1', 'cross_entropy_loss', 'confusion_matrix']
+        return [accuracy, precision_micro, recall_micro, f1_micro,
+                precision_macro, recall_macro, f1_macro,
+                precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
+                avg_loss, cm.tolist()], \
+               ['accuracy',
+                'precision_micro', 'recall_micro', 'f1_micro',
+                'precision_macro', 'recall_macro', 'f1_macro',
+                'precision_class', 'recall_class', 'f1_class', 'support_class',
+                'avg_loss', 'confusion_matrix']

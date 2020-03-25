@@ -61,6 +61,7 @@ def evaluate_dataset(split_name, dataset_cls, model, embedding, loader, batch_si
     with open(save_file, 'w') as f:
         f.write(json.dumps(scores_dict))
 
+
 if __name__ == '__main__':
     # Set default configuration in args.py
     args = get_args()

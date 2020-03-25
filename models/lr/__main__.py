@@ -26,13 +26,17 @@ LOG_TEMPLATE = ' '.join('{:>5s},{:>9.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.spli
 def evaluate_split(model, vectorizer, processor, args, save_file, split='dev'):
     evaluator = BagOfWordsEvaluator(model, vectorizer, processor, args, split)
     scores, score_names = evaluator.get_scores(silent=True)
-    accuracy, precision, recall, f1, avg_loss, _ = scores
+    accuracy, p_micro, r_micro, f1_micro = scores[:4]
+    avg_loss = scores[-2]
     print('\n' + LOG_HEADER)
-    print(LOG_TEMPLATE.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
+    print(LOG_TEMPLATE.format(split.upper(), accuracy,
+                              p_micro, r_micro, f1_micro,
+                              avg_loss))
 
     scores_dict = dict(zip(score_names, scores))
     with open(save_file, 'w') as f:
         f.write(json.dumps(scores_dict))
+
 
 if __name__ == '__main__':
     # Set default configuration in args.py
