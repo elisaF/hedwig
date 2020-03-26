@@ -116,6 +116,10 @@ class RelevanceTransferEvaluator(object):
 
         predicted_labels = np.around(np.array(self.y_pred))
         target_labels = np.array(self.y_target)
+
+        predicted_label_sets = [predicted_label.tolist() for predicted_label in predicted_labels]
+        target_label_sets = [target_label.tolist() for target_label in target_labels]
+
         cm = metrics.multilabel_confusion_matrix(target_labels, predicted_labels)
         accuracy = metrics.accuracy_score(target_labels, predicted_labels)
 
@@ -140,9 +144,9 @@ class RelevanceTransferEvaluator(object):
         return [accuracy, precision_micro, recall_micro, f1_micro,
                 precision_macro, recall_macro, f1_macro,
                 precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
-                avg_loss, cm.tolist()], \
+                avg_loss, cm.tolist(), target_label_sets, predicted_label_sets], \
                ['accuracy',
                 'precision_micro', 'recall_micro', 'f1_micro',
                 'precision_macro', 'recall_macro', 'f1_macro',
                 'precision_class', 'recall_class', 'f1_class', 'support_class',
-                'avg_loss', 'confusion_matrix']
+                'avg_loss', 'confusion_matrix', 'target_label_sets', 'predicted_label_sets']
