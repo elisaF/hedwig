@@ -53,6 +53,9 @@ class ClassificationEvaluator(Evaluator):
         predicted_label_sets = [predicted_label.tolist() for predicted_label in predicted_labels]
         target_label_sets = [target_label.tolist() for target_label in target_labels]
 
+        subset_accuracy = np.sum(np.equal(target_labels, predicted_labels).all(axis=1)) / len(target_labels)
+        hamming_loss = metrics.hamming_loss(target_labels, predicted_labels)
+
         predicted_labels = np.array(predicted_labels)
         target_labels = np.array(target_labels)
         cm = metrics.multilabel_confusion_matrix(target_labels, predicted_labels)
@@ -74,11 +77,16 @@ class ClassificationEvaluator(Evaluator):
             # Temporal averaging
             self.model.load_params(old_params)
 
-        return [accuracy, precision_micro, recall_micro, f1_micro,
+        return [hamming_loss,
+                subset_accuracy,
+                accuracy,
+                precision_micro, recall_micro, f1_micro,
                 precision_macro, recall_macro, f1_macro,
                 precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
                 avg_loss, cm.tolist(), target_label_sets, predicted_label_sets], \
-               ['accuracy',
+               ['hamming_loss',
+                'subset_accuracy',
+                'accuracy',
                 'precision_micro', 'recall_micro', 'f1_micro',
                 'precision_macro', 'recall_macro', 'f1_macro',
                 'precision_class', 'recall_class', 'f1_class', 'support_class',

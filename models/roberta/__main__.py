@@ -22,7 +22,7 @@ from models.bert.args import get_args
 def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
     evaluator = BertEvaluator(model, processor, tokenizer, args, split)
     scores, score_names = evaluator.get_scores(silent=True)
-    accuracy, precision, recall, f1 = scores[:4]
+    accuracy, precision, recall, f1 = scores[2:6]
     avg_loss = scores[-4]
     print('\n' + LOG_HEADER)
     print(LOG_TEMPLATE.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
@@ -30,6 +30,7 @@ def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
     scores_dict = dict(zip(score_names, scores))
     with open(save_file, 'w') as f:
         f.write(json.dumps(scores_dict))
+
 
 if __name__ == '__main__':
     # Set default configuration in args.py

@@ -26,7 +26,7 @@ LOG_TEMPLATE = ' '.join('{:>5s},{:>9.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.spli
 def evaluate_split(model, vectorizer, processor, args, save_file, split='dev'):
     evaluator = BagOfWordsEvaluator(model, vectorizer, processor, args, split)
     scores, score_names = evaluator.get_scores(silent=True)
-    accuracy, p_micro, r_micro, f1_micro = scores[:4]
+    accuracy, p_micro, r_micro, f1_micro = scores[2:6]
     avg_loss = scores[-4]
     print('\n' + LOG_HEADER)
     print(LOG_TEMPLATE.format(split.upper(), accuracy,

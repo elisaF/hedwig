@@ -32,6 +32,7 @@ def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
     with open(save_file, 'w') as f:
         f.write(json.dumps(scores_dict))
 
+
 if __name__ == '__main__':
     # Set default configuration in args.py
     args = get_args()
