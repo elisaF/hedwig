@@ -132,11 +132,12 @@ def convert_examples_to_features(examples, max_seq_length, tokenizer, print_exam
         # For classification tasks, the first vector (corresponding to [CLS]) is
         # used as as the "sentence vector". Note that this only makes sense because
         # the entire model is fine-tuned.
-        tokens = ["[CLS]"] + tokens_a + ["[SEP]"]
+
+        tokens = [tokenizer.cls_token] + tokens_a + [tokenizer.sep_token]
         segment_ids = [0] * len(tokens)
 
         if tokens_b:
-            tokens += tokens_b + ["[SEP]"]
+            tokens += tokens_b + [tokenizer.sep_token]
             segment_ids += [1] * (len(tokens_b) + 1)
 
         input_ids = tokenizer.convert_tokens_to_ids(tokens)
@@ -197,11 +198,11 @@ def convert_examples_to_hierarchical_features(examples, max_seq_length, tokenize
                 if len(tokens_a[i0]) > max_seq_length - 2:
                     tokens_a[i0] = tokens_a[i0][:(max_seq_length - 2)]
 
-        tokens = [["[CLS]"] + line + ["[SEP]"] for line in tokens_a]
+        tokens = [[tokenizer.cls_token] + line + [tokenizer.sep_token] for line in tokens_a]
         segment_ids = [[0] * len(line) for line in tokens]
 
         if tokens_b:
-            tokens += tokens_b + ["[SEP]"]
+            tokens += tokens_b + [tokenizer.sep_token]
             segment_ids += [1] * (len(tokens_b) + 1)
 
         input_ids = list()
