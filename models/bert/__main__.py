@@ -150,5 +150,6 @@ if __name__ == '__main__':
         model = model.to(device)
 
     evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
-    evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
+    if args.evaluate_test:
+        evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
 

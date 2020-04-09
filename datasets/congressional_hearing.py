@@ -12,7 +12,6 @@ from torchtext.vocab import Vectors
 
 from datasets.reuters import clean_string, split_sents, process_labels, generate_ngrams
 
-
 def char_quantize(string, max_length=1000):
     identity = np.identity(len(CongressionalHearingCharQuantized.ALPHABET))
     quantized_string = np.array([identity[CongressionalHearingCharQuantized.ALPHABET[char]] for char in list(string.lower()) if char in CongressionalHearingCharQuantized.ALPHABET], dtype=np.float32)
