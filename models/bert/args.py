@@ -20,6 +20,7 @@ def get_args():
                              'Sequences longer than this will be truncated, and sequences shorter \n'
                              'than this will be padded.')
 
+    parser.add_argument('--weight-decay', type=float, default=0.01)
     parser.add_argument('--warmup-proportion',
                         default=0.1,
                         type=float,
