@@ -46,7 +46,7 @@ class BertTrainer(object):
 
             if self.args.is_multilabel:
                 if self.args.pos_weights:
-                    pos_weights = self.args.pos_weights.split(',')
+                    pos_weights = [float(w) for w in self.args.pos_weights.split(',')]
                     pos_weight = torch.FloatTensor(pos_weights)
                 else:
                     pos_weight = torch.ones([self.args.num_labels])
