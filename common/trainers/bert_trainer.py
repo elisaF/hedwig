@@ -45,7 +45,11 @@ class BertTrainer(object):
             logits = self.model(input_ids, input_mask, segment_ids)[0]
 
             if self.args.is_multilabel:
-                pos_weight = torch.ones([6])
+                if self.args.pos_weights:
+                    pos_weights = self.args.pos_weights.split(',')
+                    pos_weight = torch.FloatTensor(pos_weights)
+                else:
+                    pos_weight = torch.ones([self.args.num_labels])
                 criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
                 criterion = criterion.cuda()
                 loss = criterion(logits, label_ids.float())

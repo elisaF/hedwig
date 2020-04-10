@@ -38,5 +38,9 @@ def get_args():
                              '0 (default value): dynamic loss scaling.\n'
                              'Positive power of 2: static loss scaling value.\n')
 
+    parser.add_argument('--pos_weights',
+                        type=str,
+                        default=None,
+                        help='Comma-separated weights for positive examples in each class to use during the loss')
     args = parser.parse_args()
     return args
