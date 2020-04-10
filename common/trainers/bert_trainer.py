@@ -1,5 +1,6 @@
 import datetime
 import os
+import time
 
 import torch
 import torch.nn.functional as F
@@ -109,6 +110,8 @@ class BertTrainer(object):
         train_sampler = RandomSampler(train_data)
         train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.args.batch_size)
 
+        print('Begin training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        start_time = time.monotonic()
         for epoch in trange(int(self.args.epochs), desc="Epoch"):
             self.train_epoch(train_dataloader)
             dev_evaluator = BertEvaluator(self.model, self.processor, self.tokenizer, self.args, split='dev')
@@ -132,3 +135,6 @@ class BertTrainer(object):
                     self.early_stop = True
                     tqdm.write("Early Stopping. Epoch: {}, Best Dev F1: {}".format(epoch, self.best_dev_f1))
                     break
+        end_time = time.monotonic()
+        print('End training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        print('Time elapsed: ', end_time-start_time)
