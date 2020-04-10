@@ -45,7 +45,10 @@ class BertTrainer(object):
             logits = self.model(input_ids, input_mask, segment_ids)[0]
 
             if self.args.is_multilabel:
-                loss = F.binary_cross_entropy_with_logits(logits, label_ids.float())
+                pos_weight = torch.ones([6])
+                criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+                criterion = criterion.cuda()
+                loss = criterion(logits, label_ids.float())
             else:
                 loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))
 
