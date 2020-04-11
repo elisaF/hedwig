@@ -33,7 +33,7 @@ class BertEvaluator(object):
                 self.eval_examples, self.args.max_seq_length, self.tokenizer)
         else:
             eval_features = convert_examples_to_features(
-                self.eval_examples, self.args.max_seq_length, self.tokenizer)
+                self.eval_examples, self.args.max_seq_length, self.tokenizer, use_guid=True)
 
         unpadded_input_ids = [f.input_ids for f in eval_features]
         unpadded_input_mask = [f.input_mask for f in eval_features]
@@ -48,8 +48,9 @@ class BertEvaluator(object):
         padded_input_mask = torch.tensor(unpadded_input_mask, dtype=torch.long)
         padded_segment_ids = torch.tensor(unpadded_segment_ids, dtype=torch.long)
         label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.long)
+        doc_ids = torch.tensor([f.guid for f in eval_features], dtype=torch.long)
 
-        eval_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids)
+        eval_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids, doc_ids)
         eval_sampler = SequentialSampler(eval_data)
         eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=self.args.batch_size)
 
@@ -57,13 +58,15 @@ class BertEvaluator(object):
 
         total_loss = 0
         nb_eval_steps, nb_eval_examples = 0, 0
-        predicted_labels, target_labels = list(), list()
+        predicted_labels, target_labels, target_doc_ids = list(), list(), list()
 
-        for input_ids, input_mask, segment_ids, label_ids in tqdm(eval_dataloader, desc="Evaluating", disable=silent):
+        for input_ids, input_mask, segment_ids, label_ids, doc_ids in tqdm(eval_dataloader, desc="Evaluating",
+                                                                           disable=silent):
             input_ids = input_ids.to(self.args.device)
             input_mask = input_mask.to(self.args.device)
             segment_ids = segment_ids.to(self.args.device)
             label_ids = label_ids.to(self.args.device)
+            target_doc_ids.extend(doc_ids)
 
             with torch.no_grad():
                 logits = self.model(input_ids, input_mask, segment_ids)[0]
@@ -114,11 +117,11 @@ class BertEvaluator(object):
                 precision_micro, recall_micro, f1_micro,
                 precision_macro, recall_macro, f1_macro,
                 precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
-                avg_loss, cm.tolist(), target_label_sets, predicted_label_sets], \
+                avg_loss, cm.tolist(), zip(target_doc_ids, target_label_sets, predicted_label_sets)], \
                ['hamming_loss',
                 'subset_accuracy',
                 'accuracy',
                 'precision_micro', 'recall_micro', 'f1_micro',
                 'precision_macro', 'recall_macro', 'f1_macro',
                 'precision_class', 'recall_class', 'f1_class', 'support_class',
-                'avg_loss', 'confusion_matrix', 'target_label_sets', 'predicted_label_sets']
+                'avg_loss', 'confusion_matrix', 'label_set_info (id/gold/pred)']

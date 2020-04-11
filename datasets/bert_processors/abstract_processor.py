@@ -36,6 +36,14 @@ class InputFeatures(object):
         self.label_id = label_id
 
 
+class InputFeaturesWithId(InputFeatures):
+    """A single set of features for relevance tasks."""
+
+    def __init__(self, input_ids, input_mask, segment_ids, label_id, guid):
+        super().__init__(input_ids, input_mask, segment_ids, label_id)
+        self.guid = guid
+
+
 class BertProcessor(object):
     """Base class for data converters for sequence classification data sets."""
 
@@ -88,7 +96,7 @@ class BertProcessor(object):
             return lines
 
 
-def convert_examples_to_features(examples, max_seq_length, tokenizer, print_examples=False):
+def convert_examples_to_features(examples, max_seq_length, tokenizer, print_examples=False, use_guid=False):
     """
     Loads a data file into a list of InputBatch objects
     :param examples:
@@ -165,10 +173,17 @@ def convert_examples_to_features(examples, max_seq_length, tokenizer, print_exam
             print("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
             print("label: %s" % example.label)
 
-        features.append(InputFeatures(input_ids=input_ids,
-                                      input_mask=input_mask,
-                                      segment_ids=segment_ids,
-                                      label_id=label_id))
+        if use_guid:
+            features.append(InputFeaturesWithId(input_ids=input_ids,
+                                                input_mask=input_mask,
+                                                segment_ids=segment_ids,
+                                                label_id=label_id,
+                                                guid=example.guid))
+        else:
+            features.append(InputFeatures(input_ids=input_ids,
+                                          input_mask=input_mask,
+                                          segment_ids=segment_ids,
+                                          label_id=label_id))
     return features
 
 

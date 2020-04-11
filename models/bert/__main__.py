@@ -23,7 +23,7 @@ def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
     evaluator = BertEvaluator(model, processor, tokenizer, args, split)
     scores, score_names = evaluator.get_scores(silent=True)
     accuracy, precision, recall, f1 = scores[2:6]
-    avg_loss = scores[-4]
+    avg_loss = scores[-3]
     print('\n' + LOG_HEADER)
     print(LOG_TEMPLATE.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
 
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     else:
         optimizer = AdamW(optimizer_grouped_parameters, lr=args.lr, weight_decay=args.weight_decay, correct_bias=False)
         scheduler = get_linear_schedule_with_warmup(optimizer, num_training_steps=num_train_optimization_steps,
-                                         num_warmup_steps=args.warmup_proportion * num_train_optimization_steps)
+                                                    num_warmup_steps=args.warmup_proportion * num_train_optimization_steps)
 
     trainer = BertTrainer(model, optimizer, processor, scheduler, tokenizer, args)
 

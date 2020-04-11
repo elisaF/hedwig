@@ -23,9 +23,9 @@ class CongressionalHearingProcessor(BertProcessor):
     def _create_examples(self, lines, set_type):
         examples = []
         for (i, line) in enumerate(lines):
-            guid = '%s-%s' % (set_type, i)
-            text_a = line[1]
-            label = line[0]
+            guid = line[0]
+            text_a = line[2]
+            label = line[1]
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=None, label=label))
         return examples
