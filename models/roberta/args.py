@@ -36,6 +36,11 @@ def get_args():
                         help='Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n'
                              '0 (default value): dynamic loss scaling.\n'
                              'Positive power of 2: static loss scaling value.\n')
-
+    parser.add_argument('--weight-decay', type=float, default=0.01)
+    parser.add_argument('--pos_weights',
+                        type=str,
+                        default=None,
+                        help='Comma-separated weights for positive examples in each class to use during the loss')
+    
     args = parser.parse_args()
     return args

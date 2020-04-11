@@ -129,7 +129,7 @@ if __name__ == '__main__':
             optimizer = FP16_Optimizer(optimizer, static_loss_scale=args.loss_scale)
 
     else:
-        optimizer = AdamW(optimizer_grouped_parameters, lr=args.lr, weight_decay=0.01, correct_bias=False)
+        optimizer = AdamW(optimizer_grouped_parameters, lr=args.lr, weight_decay=args.weight_decay, correct_bias=False)
         scheduler = WarmupLinearSchedule(optimizer, t_total=num_train_optimization_steps,
                                          warmup_steps=args.warmup_proportion * num_train_optimization_steps)
 
@@ -148,7 +148,8 @@ if __name__ == '__main__':
             state[new_key] = model_.state_dict()[key]
         model.load_state_dict(state)
         model = model.to(device)
-
-    evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
-    evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
+    if args.evaluate_dev:
+        evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
+    if args.evaluate_test:
+        evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
 
