@@ -16,4 +16,5 @@ def get_args():
     parser.add_argument('--data-dir', default=os.path.join(os.pardir, 'hedwig-data', 'datasets'))
     parser.add_argument('--metrics_json', default='metrics.json')
     parser.add_argument('--evaluate-test', action='store_true')
+    parser.add_argument('--evaluate-dev', action='store_true')
     return parser
