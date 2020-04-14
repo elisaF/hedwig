@@ -121,13 +121,13 @@ class BertEvaluator(object):
                                                                                                          predicted_labels)
         avg_loss = total_loss / nb_eval_steps
 
-        return [hamming_loss,
+        return {hamming_loss,
                 subset_accuracy,
                 accuracy,
                 precision_micro, recall_micro, f1_micro,
                 precision_macro, recall_macro, f1_macro,
                 precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
-                avg_loss, cm.tolist(), zip(target_doc_ids, target_label_sets, predicted_label_sets)], \
+                avg_loss, cm.tolist(), list(zip(target_doc_ids, target_label_sets, predicted_label_sets))}, \
                ['hamming_loss',
                 'subset_accuracy',
                 'accuracy',
