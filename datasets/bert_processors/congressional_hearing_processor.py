@@ -20,7 +20,7 @@ class CongressionalHearingProcessor(BertProcessor):
         return self._create_examples(
             self._read_tsv(os.path.join(data_dir, 'CongressionalHearing', 'test.tsv')), 'test')
 
-    def _create_examples(self, lines, set_type):
+    def _create_examples(self, lines):
         examples = []
         for (i, line) in enumerate(lines):
             guid = line[0]

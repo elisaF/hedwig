@@ -66,7 +66,7 @@ class BertEvaluator(object):
             input_mask = input_mask.to(self.args.device)
             segment_ids = segment_ids.to(self.args.device)
             label_ids = label_ids.to(self.args.device)
-            target_doc_ids.extend(doc_ids)
+            target_doc_ids.extend(doc_ids.tolist())
 
             with torch.no_grad():
                 logits = self.model(input_ids, input_mask, segment_ids)[0]
@@ -74,7 +74,17 @@ class BertEvaluator(object):
             if self.args.is_multilabel:
                 predicted_labels.extend(F.sigmoid(logits).round().long().cpu().detach().numpy())
                 target_labels.extend(label_ids.cpu().detach().numpy())
-                loss = F.binary_cross_entropy_with_logits(logits, label_ids.float(), size_average=False)
+                if self.args.pos_weights:
+                    pos_weights = [float(w) for w in self.args.pos_weights.split(',')]
+                    pos_weight = torch.FloatTensor(pos_weights)
+                else:
+                    pos_weight = torch.ones([self.args.num_labels])
+                if self.args.loss == 'cross-entropy':
+                    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight, size_average=False)
+                    loss = criterion(logits.cpu(), label_ids.float().cpu())
+                elif self.args.loss == 'mse':
+                    criterion = torch.nn.MSELoss(size_average=False)
+                    loss = criterion(logits.view(-1), label_ids.float().view(-1))
             else:
                 predicted_labels.extend(torch.argmax(logits, dim=1).cpu().detach().numpy())
                 target_labels.extend(torch.argmax(label_ids, dim=1).cpu().detach().numpy())

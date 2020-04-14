@@ -58,7 +58,9 @@ class BertTrainer(object):
                 elif self.args.loss == 'mse':
                     criterion = torch.nn.MSELoss()
                     criterion = criterion.cuda()
-                    loss = criterion(logits.view(-1), label_ids.float().view(-1))
+                    m = torch.nn.Sigmoid()
+                    m.cuda()
+                    loss = criterion(m(logits.view(-1)), label_ids.float().view(-1))
             else:
                 loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))
 

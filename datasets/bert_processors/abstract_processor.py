@@ -41,7 +41,7 @@ class InputFeaturesWithId(InputFeatures):
 
     def __init__(self, input_ids, input_mask, segment_ids, label_id, guid):
         super().__init__(input_ids, input_mask, segment_ids, label_id)
-        self.guid = guid
+        self.guid = int(guid)
 
 
 class BertProcessor(object):
