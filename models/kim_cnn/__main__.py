@@ -99,9 +99,9 @@ if __name__ == '__main__':
         dataset_class = dataset_map[args.dataset]
         if args.evaluate_dev:
             train_iter, dev_iter = dataset_map[args.dataset].iters_dev(args.data_dir, args.word_vectors_file,
-                                                                          args.word_vectors_dir,
-                                                                          batch_size=args.batch_size, device=device,
-                                                                          unk_init=UnknownWordVecCache.unk)
+                                                                       args.word_vectors_dir,
+                                                                       batch_size=args.batch_size, device=device,
+                                                                       unk_init=UnknownWordVecCache.unk)
         if args.evaluate_test:
             train_iter, test_iter = dataset_map[args.dataset].iters_test(args.data_dir, args.word_vectors_file,
                                                                               args.word_vectors_dir,

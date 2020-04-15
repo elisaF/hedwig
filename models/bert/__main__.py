@@ -83,7 +83,6 @@ if __name__ == '__main__':
 
     args.is_hierarchical = False
     processor = dataset_map[args.dataset]()
-    #pretrained_vocab_path = PRETRAINED_VOCAB_ARCHIVE_MAP[args.model]
     pretrained_vocab_path = args.model
     tokenizer = BertTokenizer.from_pretrained(pretrained_vocab_path)
 

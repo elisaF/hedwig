@@ -11,19 +11,18 @@ class CongressionalHearingProcessor(BagOfWordsProcessor):
 
     def get_train_examples(self, data_dir):
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, 'CongressionalHearing', 'train.tsv')), 'train')
+            self._read_tsv(os.path.join(data_dir, 'CongressionalHearing', 'train.tsv')))
 
     def get_dev_examples(self, data_dir):
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, 'CongressionalHearing', 'dev.tsv')), 'dev')
+            self._read_tsv(os.path.join(data_dir, 'CongressionalHearing', 'dev.tsv')))
 
     def get_test_examples(self, data_dir):
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, 'CongressionalHearing', 'test.tsv')), 'test')
+            self._read_tsv(os.path.join(data_dir, 'CongressionalHearing', 'test.tsv')))
 
-    def _create_examples(self, lines, set_type):
+    def _create_examples(self, lines):
         examples = []
         for (i, line) in enumerate(lines):
-            guid = '%s-%s' % (set_type, i)
-            examples.append(InputExample(guid=guid, text=line[1], label=line[0]))
+            examples.append(InputExample(guid=line[0], text=line[1], label=line[0]))
         return examples
