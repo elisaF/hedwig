@@ -125,8 +125,7 @@ if __name__ == '__main__':
             model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage)
     else:
         model = HAN(config)
-        if args.cuda:
-            model.cuda()
+        model.to(device)
 
     if not args.trained_model:
         save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
