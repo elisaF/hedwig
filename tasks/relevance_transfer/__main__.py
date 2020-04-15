@@ -270,10 +270,10 @@ if __name__ == '__main__':
                 pickle.dump(pred_scores, cache_file)
 
     else:
+        device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
         if not args.cuda:
             args.gpu = -1
         if torch.cuda.is_available() and args.cuda:
-            torch.cuda.set_device(args.gpu)
             torch.cuda.manual_seed(args.seed)
 
         with open(os.path.join('tasks', 'relevance_transfer', 'config.json'), 'r') as config_file:

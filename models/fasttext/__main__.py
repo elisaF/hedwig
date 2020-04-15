@@ -65,9 +65,9 @@ if __name__ == '__main__':
     if not args.cuda:
         args.gpu = -1
 
+    device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
     if torch.cuda.is_available() and args.cuda:
         print('Note: You are using GPU for training')
-        torch.cuda.set_device(args.gpu)
         torch.cuda.manual_seed(args.seed)
         args.gpu = torch.device('cuda:%d' % args.gpu)
 
