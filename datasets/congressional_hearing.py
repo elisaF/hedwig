@@ -22,6 +22,20 @@ def char_quantize(string, max_length=1000):
         return np.concatenate((quantized_string, np.zeros((max_length - len(quantized_string), len(CongressionalHearingCharQuantized.ALPHABET)), dtype=np.float32)))
 
 
+def process_docids(string):
+    """
+    Returns the docid as an integer
+    :param string:
+    :return:
+    """
+    try:
+        docid = int(string)
+    except ValueError:
+        # print("Error converting docid to integer:", string)
+        docid = 0
+    return docid
+
+
 class CongressionalHearing(TabularDataset):
     NAME = 'CongressionalHearing'
     NUM_CLASSES = 6
@@ -29,7 +43,8 @@ class CongressionalHearing(TabularDataset):
 
     TEXT_FIELD = Field(batch_first=True, tokenize=clean_string, include_lengths=True)
     LABEL_FIELD = Field(sequential=False, use_vocab=False, batch_first=True, preprocessing=process_labels)
-
+    DOCID_FIELD = Field(sequential=False, use_vocab=False, batch_first=True, preprocessing=process_docids)
+    
     @staticmethod
     def sort_key(ex):
         return len(ex.text)
@@ -40,7 +55,7 @@ class CongressionalHearing(TabularDataset):
                test=os.path.join('CongressionalHearing', 'test.tsv'), **kwargs):
         return super(CongressionalHearing, cls).splits(
             path, train=train, validation=validation, test=test,
-            format='tsv', fields=[('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)]
+            format='tsv', fields=[('docid', cls.DOCID_FIELD), ('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)]
         )
 
     @classmethod
@@ -68,7 +83,7 @@ class CongressionalHearing(TabularDataset):
     def splits_dev(cls, path, train=os.path.join('CongressionalHearing', 'train.tsv'),
                    validation=os.path.join('CongressionalHearing', 'dev.tsv'), **kwargs):
         return super(CongressionalHearing, cls).splits(
-            path, train=train, validation=validation, format='tsv', fields=[('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)]
+            path, train=train, validation=validation, format='tsv', fields=[('docid', cls.DOCID_FIELD), ('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)]
         )
 
     @classmethod
@@ -96,7 +111,7 @@ class CongressionalHearing(TabularDataset):
     def splits_test(cls, path, train=os.path.join('CongressionalHearing', 'train.tsv'),
                    test=os.path.join('CongressionalHearing', 'test.tsv'), **kwargs):
         return super(CongressionalHearing, cls).splits(
-            path, train=train, test=test, format='tsv', fields=[('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)]
+            path, train=train, test=test, format='tsv', fields=[('docid', cls.DOCID_FIELD), ('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)]
         )
 
     @classmethod
