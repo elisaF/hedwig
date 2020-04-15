@@ -61,6 +61,7 @@ def evaluate_dataset(split_name, dataset_cls, model, embedding, loader, batch_si
     with open(save_file, 'w') as f:
         f.write(json.dumps(scores_dict))
 
+
 if __name__ == '__main__':
     # Set default configuration in args.py
     args = get_args()
@@ -96,10 +97,17 @@ if __name__ == '__main__':
         raise ValueError('Unrecognized dataset')
     else:
         dataset_class = dataset_map[args.dataset]
-        train_iter, dev_iter, test_iter = dataset_map[args.dataset].iters(args.data_dir, args.word_vectors_file,
+        if args.evaluate_dev:
+            train_iter, dev_iter = dataset_map[args.dataset].iters_dev(args.data_dir, args.word_vectors_file,
                                                                           args.word_vectors_dir,
                                                                           batch_size=args.batch_size, device=args.gpu,
                                                                           unk_init=UnknownWordVecCache.unk)
+        if args.evaluate_test:
+            train_iter, test_iter = dataset_map[args.dataset].iters_test(args.data_dir, args.word_vectors_file,
+                                                                              args.word_vectors_dir,
+                                                                              batch_size=args.batch_size,
+                                                                              device=args.gpu,
+                                                                              unk_init=UnknownWordVecCache.unk)
 
     config = deepcopy(args)
     config.dataset = train_iter.dataset
@@ -109,8 +117,10 @@ if __name__ == '__main__':
     print('Dataset:', args.dataset)
     print('No. of target classes:', train_iter.dataset.NUM_CLASSES)
     print('No. of train instances', len(train_iter.dataset))
-    print('No. of dev instances', len(dev_iter.dataset))
-    print('No. of test instances', len(test_iter.dataset))
+    if args.evaluate_dev:
+        print('No. of dev instances', len(dev_iter.dataset))
+    if args.evaluate_test:
+        print('No. of test instances', len(test_iter.dataset))
 
     if args.resume_snapshot:
         if args.cuda:
@@ -130,15 +140,19 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(parameter, lr=args.lr, weight_decay=args.weight_decay)
 
     train_evaluator = EvaluatorFactory.get_evaluator(dataset_map[args.dataset], model, None, train_iter, args.batch_size, args.gpu)
-    test_evaluator = EvaluatorFactory.get_evaluator(dataset_map[args.dataset], model, None, test_iter, args.batch_size, args.gpu)
-    dev_evaluator = EvaluatorFactory.get_evaluator(dataset_map[args.dataset], model, None, dev_iter, args.batch_size, args.gpu)
+    if args.evaluate_dev:
+        dev_evaluator = EvaluatorFactory.get_evaluator(dataset_map[args.dataset], model, None, dev_iter,
+                                                       args.batch_size, args.gpu)
+        if hasattr(dev_evaluator, 'is_multilabel'):
+            dev_evaluator.is_multilabel = dataset_class.IS_MULTILABEL
+
+    if args.evaluate_test:
+        test_evaluator = EvaluatorFactory.get_evaluator(dataset_map[args.dataset], model, None, test_iter, args.batch_size, args.gpu)
+        if hasattr(test_evaluator, 'is_multilabel'):
+            test_evaluator.is_multilabel = dataset_class.IS_MULTILABEL
 
     if hasattr(train_evaluator, 'is_multilabel'):
         train_evaluator.is_multilabel = dataset_class.IS_MULTILABEL
-    if hasattr(test_evaluator, 'is_multilabel'):
-        test_evaluator.is_multilabel = dataset_class.IS_MULTILABEL
-    if hasattr(dev_evaluator, 'is_multilabel'):
-        dev_evaluator.is_multilabel = dataset_class.IS_MULTILABEL
 
     trainer_config = {
         'optimizer': optimizer,
@@ -149,8 +163,12 @@ if __name__ == '__main__':
         'logger': logger,
         'is_multilabel': dataset_class.IS_MULTILABEL
     }
-
-    trainer = TrainerFactory.get_trainer(args.dataset, model, None, train_iter, trainer_config, train_evaluator, test_evaluator, dev_evaluator)
+    if args.evaluate_dev:
+        trainer = TrainerFactory.get_trainer_dev(args.dataset, model, None, train_iter, trainer_config, train_evaluator,
+                                                 dev_evaluator)
+    if args.evaluate_test:
+        trainer = TrainerFactory.get_trainer_test(args.dataset, model, None, train_iter, trainer_config, train_evaluator,
+                                                  test_evaluator)
 
     if not args.trained_model:
         trainer.train(args.epochs)
