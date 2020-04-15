@@ -73,11 +73,11 @@ if __name__ == '__main__':
     # Set random seed for reproducibility
     torch.manual_seed(args.seed)
     torch.backends.cudnn.deterministic = True
+    device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
     if not args.cuda:
         args.gpu = -1
     if torch.cuda.is_available() and args.cuda:
         print('Note: You are using GPU for training')
-        torch.cuda.device(args.gpu)
         torch.cuda.manual_seed(args.seed)
     if torch.cuda.is_available() and not args.cuda:
         print('Warning: Using CPU for training')
@@ -129,8 +129,7 @@ if __name__ == '__main__':
             model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage)
     else:
         model = KimCNN(config)
-        if args.cuda:
-            model.cuda()
+        model.to(device)
 
     if not args.trained_model:
         save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
