@@ -29,7 +29,7 @@ class TrainerFactory(object):
 
     @staticmethod
     def get_trainer_dev(dataset_name, model, embedding, train_loader, trainer_config, train_evaluator,
-                    dev_evaluator=None):
+                    dev_evaluator):
 
         if dataset_name not in TrainerFactory.trainer_map:
             raise ValueError('{} is not implemented.'.format(dataset_name))

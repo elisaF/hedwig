@@ -11,7 +11,7 @@ from common.trainers.trainer import Trainer
 
 class ClassificationTrainer(Trainer):
 
-    def __init__(self, model, embedding, train_loader, trainer_config, train_evaluator, test_evaluator, dev_evaluator):
+    def __init__(self, model, embedding, train_loader, trainer_config, train_evaluator, test_evaluator=None, dev_evaluator=None):
         super().__init__(model, embedding, train_loader, trainer_config, train_evaluator, test_evaluator, dev_evaluator)
         self.config = trainer_config
         self.early_stop = False
