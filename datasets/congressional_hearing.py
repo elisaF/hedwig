@@ -64,6 +64,62 @@ class CongressionalHearing(TabularDataset):
         return BucketIterator.splits((train, val, test), batch_size=batch_size, repeat=False, shuffle=shuffle,
                                      sort_within_batch=True, device=device)
 
+    @classmethod
+    def splits_dev(cls, path, train=os.path.join('CongressionalHearing', 'train.tsv'),
+                   validation=os.path.join('CongressionalHearing', 'dev.tsv'), **kwargs):
+        return super(CongressionalHearing, cls).splits(
+            path, train=train, validation=validation, format='tsv', fields=[('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)]
+        )
+
+    @classmethod
+    def iters_dev(cls, path, vectors_name, vectors_cache, batch_size=64, shuffle=True, device=0, vectors=None,
+              unk_init=torch.Tensor.zero_):
+        """
+        :param path: directory containing train, test, dev files
+        :param vectors_name: name of word vectors file
+        :param vectors_cache: path to directory containing word vectors file
+        :param batch_size: batch size
+        :param device: GPU device
+        :param vectors: custom vectors - either predefined torchtext vectors or your own custom Vector classes
+        :param unk_init: function used to generate vector for OOV words
+        :return:
+        """
+        if vectors is None:
+            vectors = Vectors(name=vectors_name, cache=vectors_cache, unk_init=unk_init)
+
+        train, val = cls.splits_dev(path)
+        cls.TEXT_FIELD.build_vocab(train, val, vectors=vectors)
+        return BucketIterator.splits((train, val), batch_size=batch_size, repeat=False, shuffle=shuffle,
+                                     sort_within_batch=True, device=device)
+
+    @classmethod
+    def splits_test(cls, path, train=os.path.join('CongressionalHearing', 'train.tsv'),
+                   test=os.path.join('CongressionalHearing', 'test.tsv'), **kwargs):
+        return super(CongressionalHearing, cls).splits(
+            path, train=train, test=test, format='tsv', fields=[('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)]
+        )
+
+    @classmethod
+    def iters_test(cls, path, vectors_name, vectors_cache, batch_size=64, shuffle=True, device=0, vectors=None,
+              unk_init=torch.Tensor.zero_):
+        """
+        :param path: directory containing train, test, dev files
+        :param vectors_name: name of word vectors file
+        :param vectors_cache: path to directory containing word vectors file
+        :param batch_size: batch size
+        :param device: GPU device
+        :param vectors: custom vectors - either predefined torchtext vectors or your own custom Vector classes
+        :param unk_init: function used to generate vector for OOV words
+        :return:
+        """
+        if vectors is None:
+            vectors = Vectors(name=vectors_name, cache=vectors_cache, unk_init=unk_init)
+
+        train, test = cls.splits_test(path)
+        cls.TEXT_FIELD.build_vocab(train, test, vectors=vectors)
+        return BucketIterator.splits((train, test), batch_size=batch_size, repeat=False, shuffle=shuffle,
+                                     sort_within_batch=True, device=device)
+
 
 class CongressionalHearingBOW(CongressionalHearing):
     TEXT_FIELD = Field(batch_first=True, tokenize=clean_string, preprocessing=generate_ngrams, include_lengths=True)
