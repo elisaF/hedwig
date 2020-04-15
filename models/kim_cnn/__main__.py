@@ -100,13 +100,13 @@ if __name__ == '__main__':
         if args.evaluate_dev:
             train_iter, dev_iter = dataset_map[args.dataset].iters_dev(args.data_dir, args.word_vectors_file,
                                                                           args.word_vectors_dir,
-                                                                          batch_size=args.batch_size, device=args.gpu,
+                                                                          batch_size=args.batch_size, device=device,
                                                                           unk_init=UnknownWordVecCache.unk)
         if args.evaluate_test:
             train_iter, test_iter = dataset_map[args.dataset].iters_test(args.data_dir, args.word_vectors_file,
                                                                               args.word_vectors_dir,
                                                                               batch_size=args.batch_size,
-                                                                              device=args.gpu,
+                                                                              device=device,
                                                                               unk_init=UnknownWordVecCache.unk)
 
     config = deepcopy(args)
@@ -184,8 +184,8 @@ if __name__ == '__main__':
     if args.evaluate_dev:
         evaluate_dataset('dev', dataset_map[args.dataset], model, None, dev_iter, args.batch_size,
                          is_multilabel=dataset_class.IS_MULTILABEL,
-                         device=args.gpu, save_file=metrics_dev_json)
+                         device=device, save_file=metrics_dev_json)
     if args.evaluate_test:
         evaluate_dataset('test', dataset_map[args.dataset], model, None, test_iter, args.batch_size,
                          is_multilabel=dataset_class.IS_MULTILABEL,
-                         device=args.gpu, save_file=metrics_test_json)
+                         device=device, save_file=metrics_test_json)
