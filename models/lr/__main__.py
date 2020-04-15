@@ -103,5 +103,7 @@ if __name__ == '__main__':
         model = torch.load(args.trained_model, map_location=lambda storage, location: storage)
         model = model.to(device)
 
-    evaluate_split(model, vectorizer, processor, args, metrics_dev_json, split='dev')
-    evaluate_split(model, vectorizer, processor, args, metrics_test_json, split='test')
+    if args.evaluate_dev:
+        evaluate_split(model, vectorizer, processor, args, metrics_dev_json, split='dev')
+    if args.evaluate_test:
+        evaluate_split(model, vectorizer, processor, args, metrics_test_json, split='test')

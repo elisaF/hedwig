@@ -60,6 +60,7 @@ def evaluate_dataset(split_name, dataset_cls, model, embedding, loader, batch_si
     with open(save_file, 'w') as f:
         f.write(json.dumps(scores_dict))
 
+
 if __name__ == '__main__':
     # Set default configuration in args.py
     args = get_args()
@@ -170,12 +171,14 @@ if __name__ == '__main__':
         model.load_ema_params()
 
     # Calculate dev and test metrics
-    evaluate_dataset('dev', dataset_class, model, None, dev_iter, args.batch_size,
-                     is_multilabel=dataset_class.IS_MULTILABEL,
-                     device=args.gpu, save_file=metrics_dev_json)
-    evaluate_dataset('test', dataset_class, model, None, test_iter, args.batch_size,
-                     is_multilabel=dataset_class.IS_MULTILABEL,
-                     device=args.gpu, save_file=metrics_test_json)
+    if args.evaluate_dev:
+        evaluate_dataset('dev', dataset_class, model, None, dev_iter, args.batch_size,
+                         is_multilabel=dataset_class.IS_MULTILABEL,
+                         device=args.gpu, save_file=metrics_dev_json)
+    if args.evaluate_test:
+        evaluate_dataset('test', dataset_class, model, None, test_iter, args.batch_size,
+                         is_multilabel=dataset_class.IS_MULTILABEL,
+                         device=args.gpu, save_file=metrics_test_json)
 
     if model.beta_ema > 0:
         model.load_params(old_params)

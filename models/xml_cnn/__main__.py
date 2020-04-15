@@ -165,9 +165,11 @@ if __name__ == '__main__':
     if hasattr(trainer, 'snapshot_path'):
         model = torch.load(trainer.snapshot_path)
 
-    evaluate_dataset('dev', dataset_map[args.dataset], model, None, dev_iter, args.batch_size,
-                     is_multilabel=dataset_class.IS_MULTILABEL,
-                     device=args.gpu, save_file=metrics_dev_json)
-    evaluate_dataset('test', dataset_map[args.dataset], model, None, test_iter, args.batch_size,
+    if args.evaluate_dev:
+        evaluate_dataset('dev', dataset_map[args.dataset], model, None, dev_iter, args.batch_size,
+                         is_multilabel=dataset_class.IS_MULTILABEL,
+                         device=args.gpu, save_file=metrics_dev_json)
+    if args.evaluate_test:
+        evaluate_dataset('test', dataset_map[args.dataset], model, None, test_iter, args.batch_size,
                      is_multilabel=dataset_class.IS_MULTILABEL,
                      device=args.gpu, save_file=metrics_test_json)
