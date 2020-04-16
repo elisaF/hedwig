@@ -149,7 +149,7 @@ if __name__ == '__main__':
     }
     if args.evaluate_dev:
         trainer = TrainerFactory.get_trainer_dev(args.dataset, model, None, train_iter, trainer_config, train_evaluator, dev_evaluator)
-    if args.evaluate_dev:
+    if args.evaluate_test:
         trainer = TrainerFactory.get_trainer_test(args.dataset, model, None, train_iter, trainer_config, train_evaluator,
                                              test_evaluator)
 
