@@ -1,77 +1,64 @@
-"""
-BSD 3-Clause License
+# Weight drop implementation by sdraper-CS
+# from https://github.com/salesforce/awd-lstm-lm/issues/86#issuecomment-447910610
 
-Copyright (c) 2017, 
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
-
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-* Neither the name of the copyright holder nor the names of its
-  contributors may be used to endorse or promote products derived from
-  this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""
 import torch
 from torch.nn import Parameter
-from functools import wraps
+
+
+class BackHook(torch.nn.Module):
+    def __init__(self, hook):
+        super(BackHook, self).__init__()
+        self._hook = hook
+        self.register_backward_hook(self._backward)
+
+    def forward(self, *inp):
+        return inp
+
+    @staticmethod
+    def _backward(self, grad_in, grad_out):
+        self._hook()
+        return None
 
 
 class WeightDrop(torch.nn.Module):
-
+    """
+    Implements drop-connect, as per Merity et al https://arxiv.org/abs/1708.02182
+    """
     def __init__(self, module, weights, dropout=0, variational=False):
-        super().__init__()
+        super(WeightDrop, self).__init__()
         self.module = module
         self.weights = weights
         self.dropout = dropout
         self.variational = variational
         self._setup()
-
-    def null_function(*args, **kwargs):
-        # We need to replace flatten_parameters with a nothing function
-        return
+        self.wdrop = BackHook(self._backward)
 
     def _setup(self):
-        # Terrible temporary solution to an issue regarding compacting weights re: CUDNN RNN
-        if issubclass(type(self.module), torch.nn.RNNBase):
-            self.module.flatten_parameters = self.null_function
-
         for name_w in self.weights:
             print('Applying weight drop of {} to {}'.format(self.dropout, name_w))
             w = getattr(self.module, name_w)
-            del self.module._parameters[name_w]
-            self.module.register_parameter(name_w + '_raw', Parameter(w.data))
+            self.register_parameter(name_w + '_raw', Parameter(w.data))
 
     def _setweights(self):
         for name_w in self.weights:
-            raw_w = getattr(self.module, name_w + '_raw')
-            w = None
-            if self.variational:
-                mask = torch.autograd.Variable(torch.ones(raw_w.size(0), 1))
-                if raw_w.is_cuda: mask = mask.cuda()
-                mask = torch.nn.Parameter(torch.nn.torch.nn.functional.dropout(mask, p=self.dropout, training=True))
-                w = torch.nn.Parameter(mask.expand_as(raw_w) * raw_w)
+            raw_w = getattr(self, name_w + '_raw')
+            if self.training:
+                mask = raw_w.new_ones((raw_w.size(0), 1))
+                mask = torch.nn.functional.dropout(mask, p=self.dropout, training=True)
+                w = mask.expand_as(raw_w) * raw_w
+                setattr(self, name_w + "_mask", mask)
             else:
-                w = torch.nn.Parameter(torch.nn.functional.dropout(raw_w, p=self.dropout, training=self.training))
-            setattr(self.module, name_w, w)
+                w = raw_w
+            rnn_w = getattr(self.module, name_w)
+            rnn_w.data.copy_(w)
+
+    def _backward(self):
+        # transfer gradients from embeddedRNN to raw params
+        for name_w in self.weights:
+            raw_w = getattr(self, name_w + '_raw')
+            rnn_w = getattr(self.module, name_w)
+            raw_w.grad = rnn_w.grad * getattr(self, name_w + "_mask")
 
     def forward(self, *args):
         self._setweights()
-        return self.module.forward(*args)
+        return self.module(*self.wdrop(*args))
