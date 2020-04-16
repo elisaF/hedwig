@@ -103,14 +103,14 @@ if __name__ == '__main__':
                                                                   args.word_vectors_file,
                                                                   args.word_vectors_dir,
                                                                   batch_size=args.batch_size,
-                                                                  device=args.gpu,
+                                                                  device=device,
                                                                   unk_init=UnknownWordVecCache.unk)
         if args.evaluate_test:
             train_iter, test_iter = dataset_class.iters_test(args.data_dir,
                                                               args.word_vectors_file,
                                                               args.word_vectors_dir,
                                                               batch_size=args.batch_size,
-                                                              device=args.gpu,
+                                                              device=device,
                                                               unk_init=UnknownWordVecCache.unk)
 
     config = deepcopy(args)
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     if args.resume_snapshot:
         if args.cuda:
-            model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage.cuda(args.gpu))
+            model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage.cuda(device))
         else:
             model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage)
     else:
@@ -142,13 +142,13 @@ if __name__ == '__main__':
     parameter = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = torch.optim.Adam(parameter, lr=args.lr, weight_decay=args.weight_decay)
 
-    train_evaluator = EvaluatorFactory.get_evaluator(dataset_class, model, None, train_iter, args.batch_size, args.gpu)
+    train_evaluator = EvaluatorFactory.get_evaluator(dataset_class, model, None, train_iter, args.batch_size, device)
     if args.evaluate_test:
-        test_evaluator = EvaluatorFactory.get_evaluator(dataset_class, model, None, test_iter, args.batch_size, args.gpu)
+        test_evaluator = EvaluatorFactory.get_evaluator(dataset_class, model, None, test_iter, args.batch_size, device)
         if hasattr(test_evaluator, 'is_multilabel'):
             test_evaluator.is_multilabel = dataset_class.IS_MULTILABEL
     if args.evaluate_dev:
-        dev_evaluator = EvaluatorFactory.get_evaluator(dataset_class, model, None, dev_iter, args.batch_size, args.gpu)
+        dev_evaluator = EvaluatorFactory.get_evaluator(dataset_class, model, None, dev_iter, args.batch_size, device)
         if hasattr(dev_evaluator, 'is_multilabel'):
             dev_evaluator.is_multilabel = dataset_class.IS_MULTILABEL
             
@@ -175,7 +175,7 @@ if __name__ == '__main__':
         trainer.train(args.epochs)
     else:
         if args.cuda:
-            model = torch.load(args.trained_model, map_location=lambda storage, location: storage.cuda(args.gpu))
+            model = torch.load(args.trained_model, map_location=lambda storage, location: storage.cuda(device))
         else:
             model = torch.load(args.trained_model, map_location=lambda storage, location: storage)
 
@@ -189,11 +189,11 @@ if __name__ == '__main__':
     if args.evaluate_dev:
         evaluate_dataset('dev', dataset_class, model, None, dev_iter, args.batch_size,
                          is_multilabel=dataset_class.IS_MULTILABEL,
-                         device=args.gpu, save_file=metrics_dev_json)
+                         device=device, save_file=metrics_dev_json)
     if args.evaluate_test:
         evaluate_dataset('test', dataset_class, model, None, test_iter, args.batch_size,
                          is_multilabel=dataset_class.IS_MULTILABEL,
-                         device=args.gpu, save_file=metrics_test_json)
+                         device=device, save_file=metrics_test_json)
 
     if model.beta_ema > 0:
         model.load_params(old_params)
