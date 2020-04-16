@@ -147,8 +147,11 @@ if __name__ == '__main__':
         'model_outfile': args.save_path,
         'is_multilabel': dataset_class.IS_MULTILABEL
     }
-
-    trainer = TrainerFactory.get_trainer(args.dataset, model, None, train_iter, trainer_config, train_evaluator, test_evaluator, dev_evaluator)
+    if args.evaluate_dev:
+        trainer = TrainerFactory.get_trainer_dev(args.dataset, model, None, train_iter, trainer_config, train_evaluator, dev_evaluator)
+    if args.evaluate_dev:
+        trainer = TrainerFactory.get_trainer_test(args.dataset, model, None, train_iter, trainer_config, train_evaluator,
+                                             test_evaluator)
 
     if not args.trained_model:
         trainer.train(args.epochs)
