@@ -60,7 +60,7 @@ class BertTrainer(object):
                     criterion = criterion.cuda()
                     m = torch.nn.Sigmoid()
                     m.cuda()
-                    loss = criterion(m(logits.view(-1)), label_ids.float().view(-1))
+                    loss = criterion(m(logits), label_ids.float())
             else:
                 loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))
 
@@ -92,7 +92,7 @@ class BertTrainer(object):
                 self.train_examples, self.args.max_seq_length, self.tokenizer)
         else:
             train_features = convert_examples_to_features(
-                self.train_examples, self.args.max_seq_length, self.tokenizer)
+                self.train_examples, self.args.max_seq_length, self.tokenizer, use_guid=True)
 
         unpadded_input_ids = [f.input_ids for f in train_features]
         unpadded_input_mask = [f.input_mask for f in train_features]
