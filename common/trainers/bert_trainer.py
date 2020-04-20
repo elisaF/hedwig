@@ -124,7 +124,7 @@ class BertTrainer(object):
             if self.args.evaluate_dev:
                 dev_evaluator = BertEvaluator(self.model, self.processor, self.tokenizer, self.args, split='dev')
                 dev_precision, dev_recall, dev_f1, dev_acc, dev_loss, \
-                    _, _, _, _, _, _, _, _, _, _, _ = dev_evaluator.get_scores()[0]
+                    _, _, _, _, _, _, _, _, _, _ = dev_evaluator.get_scores()[0]
 
                 # Print validation results
                 tqdm.write(self.log_header)
