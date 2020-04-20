@@ -102,7 +102,6 @@ class BertEvaluator(object):
         predicted_label_sets = [predicted_label.tolist() for predicted_label in predicted_labels]
         target_label_sets = [target_label.tolist() for target_label in target_labels]
 
-        subset_accuracy = np.sum(np.equal(target_labels, predicted_labels).all(axis=1)) / len(target_labels)
         hamming_loss = metrics.hamming_loss(target_labels, predicted_labels)
 
         predicted_labels, target_labels = np.array(predicted_labels), np.array(target_labels)
@@ -121,17 +120,17 @@ class BertEvaluator(object):
                                                                                                          predicted_labels)
         avg_loss = total_loss / nb_eval_steps
 
-        return [hamming_loss,
-                subset_accuracy,
+        return [precision_macro, recall_macro, f1_macro,
                 accuracy,
+                avg_loss,
+                hamming_loss,
                 precision_micro, recall_micro, f1_micro,
-                precision_macro, recall_macro, f1_macro,
                 precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
-                avg_loss, cm.tolist(), list(zip(target_doc_ids, target_label_sets, predicted_label_sets))], \
-               ['hamming_loss',
-                'subset_accuracy',
+                cm.tolist(), list(zip(target_doc_ids, target_label_sets, predicted_label_sets))], \
+               ['precision_macro', 'recall_macro', 'f1_macro',
                 'accuracy',
+                'avg_loss',
+                'hamming_loss',
                 'precision_micro', 'recall_micro', 'f1_micro',
-                'precision_macro', 'recall_macro', 'f1_macro',
                 'precision_class', 'recall_class', 'f1_class', 'support_class',
-                'avg_loss', 'confusion_matrix', 'label_set_info (id/gold/pred)']
+                'confusion_matrix', 'label_set_info (id/gold/pred)']

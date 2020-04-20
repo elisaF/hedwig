@@ -89,8 +89,8 @@ class ClassificationTrainer(Trainer):
             self.train_epoch(epoch)
 
             # Evaluate performance on validation set
-            _, _, dev_acc, dev_precision, dev_recall, dev_f1, \
-            _, _, _, _, _, _, _, dev_loss, _, _, _ = self.dev_evaluator.get_scores()[0]
+            dev_precision, dev_recall, dev_f1, dev_acc, dev_loss, \
+                _, _, _, _, _, _, _, _, _, _, _ = self.dev_evaluator.get_scores()[0]
 
             # Print validation results
             print('\n' + dev_header)

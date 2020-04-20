@@ -85,17 +85,17 @@ class BagOfWordsEvaluator(object):
 
         avg_loss = total_loss / nb_eval_steps
 
-        return [hamming_loss,
-                subset_accuracy,
+        return [precision_macro, recall_macro, f1_macro,
                 accuracy,
+                avg_loss,
+                hamming_loss,
                 precision_micro, recall_micro, f1_micro,
-                precision_macro, recall_macro, f1_macro,
                 precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
-                avg_loss, cm.tolist(), target_label_sets, predicted_label_sets], \
-               ['hamming_loss',
-                'subset_accuracy',
+                cm.tolist(), target_label_sets, predicted_label_sets], \
+               ['precision_macro', 'recall_macro', 'f1_macro',
                 'accuracy',
+                'avg_loss',
+                'hamming_loss',
                 'precision_micro', 'recall_micro', 'f1_micro',
-                'precision_macro', 'recall_macro', 'f1_macro',
                 'precision_class', 'recall_class', 'f1_class', 'support_class',
-                'avg_loss', 'confusion_matrix', 'target_label_sets', 'predicted_label_sets']
+                'confusion_matrix', 'target_label_sets', 'predicted_label_sets']
