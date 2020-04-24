@@ -105,9 +105,9 @@ class BertHierarchicalTrainer(object):
     def get_masked_logits(self, gold_coarse_labels, logits_fine):
         masks = []
         for parent_idx, child_idxs in self.args.parent_to_child_index_map.items():
-            masks.append(gold_coarse_labels[:, parent_idx].byte().repeat(len(child_idxs), 1).transpose(0, 1))
+            masks.append(gold_coarse_labels[:, parent_idx].bool().repeat(len(child_idxs), 1).transpose(0, 1))
         mask = torch.cat(masks, 1)
-        logits_fine[~mask] = -1e10
+        logits_fine[~mask] = (-1e10)
         return logits_fine
 
     def train(self):
