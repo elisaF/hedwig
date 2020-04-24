@@ -7,7 +7,7 @@ from transformers import AdamW, BertForSequenceClassification, BertTokenizer, ge
 
 from common.constants import *
 from common.evaluators.bert_evaluator import BertEvaluator
-from common.trainers.bert_trainer import BertHierarchicalTrainer
+from common.trainers.bert_hierarchical_trainer import BertHierarchicalTrainer
 from datasets.bert_processors.aapd_processor import AAPDProcessor
 from datasets.bert_processors.agnews_processor import AGNewsProcessor
 from datasets.bert_processors.imdb_processor import IMDBProcessor
