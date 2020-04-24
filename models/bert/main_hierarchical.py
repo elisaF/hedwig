@@ -80,7 +80,9 @@ if __name__ == '__main__':
     args.parent_to_child_index_map = {0: (0, 1), 1: (2, 3), 2: (4, 5)}
 
     if not args.trained_model:
-        save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
+        save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME+'_coarse')
+        os.makedirs(save_path, exist_ok=True)
+        save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME + '_fine')
         os.makedirs(save_path, exist_ok=True)
 
     args.is_hierarchical = False
