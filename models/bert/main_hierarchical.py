@@ -19,11 +19,14 @@ from datasets.bert_processors.yelp2014_processor import Yelp2014Processor
 from models.bert.args import get_args
 
 
-def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
-    evaluator = BertEvaluator(model, processor, tokenizer, args, split)
+def evaluate_split(model, processor, tokenizer, args, save_file, split='dev', is_coarse=False):
+    evaluator = BertEvaluator(model, processor, tokenizer, args, split, is_coarse)
     scores, score_names = evaluator.get_scores(silent=True)
     accuracy, precision, recall, f1, avg_loss = scores[:5]
-    print('\n' + LOG_HEADER)
+    if is_coarse:
+        print('\n' + 'FINE: ' + LOG_HEADER)
+    else:
+        print('\n' + 'COARSE: ' + LOG_HEADER)
     print(LOG_TEMPLATE.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
 
     scores_dict = dict(zip(score_names, scores))
