@@ -146,8 +146,10 @@ class BertHierarchicalTrainer(object):
         for epoch in trange(int(self.args.epochs), desc="Epoch"):
             self.train_epoch(train_dataloader)
             if self.args.evaluate_dev:
-                dev_evaluator_coarse = BertEvaluator(self.model_coarse, self.processor, self.tokenizer, self.args, split='dev')
-                dev_evaluator_fine = BertEvaluator(self.model_fine, self.processor, self.tokenizer, self.args, split='dev')
+                dev_evaluator_coarse = BertEvaluator(self.model_coarse, self.processor,
+                                                     self.tokenizer, self.args, split='dev', map_labels=True)
+                dev_evaluator_fine = BertEvaluator(self.model_fine, self.processor,
+                                                   self.tokenizer, self.args, split='dev')
                 dev_precision_coarse, dev_recall_coarse, dev_f1_coarse, dev_acc_coarse, dev_loss_coarse, \
                     _, _, _, _, _, _, _, _, _, _ = dev_evaluator_coarse.get_scores()[0]
                 dev_precision_fine, dev_recall_fine, dev_f1_fine, dev_acc_fine, dev_loss_fine, \

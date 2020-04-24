@@ -16,7 +16,7 @@ warnings.filterwarnings('ignore')
 
 
 class BertEvaluator(object):
-    def __init__(self, model, processor, tokenizer, args, split='dev', map_labels=True):
+    def __init__(self, model, processor, tokenizer, args, split='dev', map_labels=False):
         self.args = args
         self.model = model
         self.processor = processor
