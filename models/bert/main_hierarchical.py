@@ -127,7 +127,7 @@ if __name__ == '__main__':
     model_fine = torch.load(trainer.snapshot_path_fine)
 
     if args.evaluate_dev:
-        evaluate_split(model_coarse, processor, tokenizer, args, metrics_dev_json_coarse, split='dev')
+        evaluate_split(model_coarse, processor, tokenizer, args, metrics_dev_json_coarse, split='dev', is_coarse=True)
         evaluate_split(model_fine, processor, tokenizer, args, metrics_dev_json_fine, split='dev')
     if args.evaluate_test:
         evaluate_split(model_coarse, processor, tokenizer, args, metrics_test_json_coarse, split='test')
