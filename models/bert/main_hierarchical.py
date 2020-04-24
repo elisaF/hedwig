@@ -22,7 +22,7 @@ from models.bert.args import get_args
 def evaluate_split(model, processor, tokenizer, args, save_file, split='dev', is_coarse=False):
     evaluator = BertEvaluator(model, processor, tokenizer, args, split, is_coarse)
     scores, score_names = evaluator.get_scores(silent=True)
-    accuracy, precision, recall, f1, avg_loss = scores[:5]
+    precision, recall, f1, accuracy, avg_loss = scores[:5]
     if is_coarse:
         print('\n' + 'FINE: ' + LOG_HEADER)
     else:
