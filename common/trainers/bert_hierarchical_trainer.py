@@ -150,10 +150,10 @@ class BertHierarchicalTrainer(object):
                                                      self.tokenizer, self.args, split='dev', map_labels=True)
                 dev_evaluator_fine = BertEvaluator(self.model_fine, self.processor,
                                                    self.tokenizer, self.args, split='dev')
-                dev_precision_coarse, dev_recall_coarse, dev_f1_coarse, dev_acc_coarse, dev_loss_coarse, \
-                    _, _, _, _, _, _, _, _, _, _ = dev_evaluator_coarse.get_scores()[0]
-                dev_precision_fine, dev_recall_fine, dev_f1_fine, dev_acc_fine, dev_loss_fine, \
-                _, _, _, _, _, _, _, _, _, _ = dev_evaluator_fine.get_scores()[0]
+                dev_precision_coarse, dev_recall_coarse, dev_f1_coarse, dev_acc_coarse, dev_loss_coarse = \
+                    dev_evaluator_coarse.get_scores()[0][:5]
+                dev_precision_fine, dev_recall_fine, dev_f1_fine, dev_acc_fine, dev_loss_fine = \
+                    dev_evaluator_fine.get_scores()[0][:5]
 
                 # Print validation results
                 tqdm.write('COARSE: '+self.log_header)
