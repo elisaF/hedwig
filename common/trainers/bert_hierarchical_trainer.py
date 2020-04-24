@@ -95,7 +95,7 @@ class BertHierarchicalTrainer(object):
         for parent_idx, child_idxs in self.args.parent_to_child_index_map.items():
             weights.append(gold_coarse_labels[:, parent_idx].bool().repeat(len(child_idxs), 1).transpose(0, 1))
         weight = torch.cat(weights, 1)
-        return weight
+        return weight.float()
 
     def train(self):
         if self.args.is_hierarchical:
