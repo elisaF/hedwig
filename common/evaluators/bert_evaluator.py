@@ -9,18 +9,19 @@ from tqdm import tqdm
 
 from datasets.bert_processors.abstract_processor import convert_examples_to_features, \
     convert_examples_to_hierarchical_features
-from utils.preprocessing import pad_input_matrix
+from utils.preprocessing import pad_input_matrix, get_coarse_labels
 
 # Suppress warnings from sklearn.metrics
 warnings.filterwarnings('ignore')
 
 
 class BertEvaluator(object):
-    def __init__(self, model, processor, tokenizer, args, split='dev'):
+    def __init__(self, model, processor, tokenizer, args, split='dev', map_labels=True):
         self.args = args
         self.model = model
         self.processor = processor
         self.tokenizer = tokenizer
+        self.map_labels = map_labels
 
         if split == 'test':
             self.eval_examples = self.processor.get_test_examples(args.data_dir)
@@ -50,6 +51,11 @@ class BertEvaluator(object):
         label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.long)
         doc_ids = torch.tensor([f.guid for f in eval_features], dtype=torch.long)
 
+        if self.map_labels:
+            # get coarse labels from the fine labels
+            label_ids = get_coarse_labels(label_ids, self.args.batch_size, self.args.num_coarse_labels,
+                                          self.args.parent_to_child_index_map, self.args.device)
+        
         eval_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids, doc_ids)
         eval_sampler = SequentialSampler(eval_data)
         eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=self.args.batch_size)
@@ -74,13 +80,13 @@ class BertEvaluator(object):
             if self.args.is_multilabel:
                 predicted_labels.extend(F.sigmoid(logits).round().long().cpu().detach().numpy())
                 target_labels.extend(label_ids.cpu().detach().numpy())
-                if self.args.pos_weights:
-                    pos_weights = [float(w) for w in self.args.pos_weights.split(',')]
-                    pos_weight = torch.FloatTensor(pos_weights)
-                else:
-                    pos_weight = torch.ones([self.args.num_labels])
+                # if self.args.pos_weights:
+                #     pos_weights = [float(w) for w in self.args.pos_weights.split(',')]
+                #     pos_weight = torch.FloatTensor(pos_weights)
+                # else:
+                #     pos_weight = torch.ones([self.args.num_labels])
                 if self.args.loss == 'cross-entropy':
-                    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight, size_average=False)
+                    criterion = torch.nn.BCEWithLogitsLoss(size_average=False)
                     loss = criterion(logits.cpu(), label_ids.float().cpu())
                 elif self.args.loss == 'mse':
                     criterion = torch.nn.MSELoss(size_average=False)

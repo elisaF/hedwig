@@ -3,7 +3,6 @@ import os
 import time
 
 import torch
-import torch.nn.functional as F
 from torch.utils.data import DataLoader, RandomSampler, TensorDataset
 from tqdm import tqdm
 from tqdm import trange
@@ -11,13 +10,11 @@ from tqdm import trange
 from common.evaluators.bert_evaluator import BertEvaluator
 from datasets.bert_processors.abstract_processor import convert_examples_to_features
 from datasets.bert_processors.abstract_processor import convert_examples_to_hierarchical_features
-from utils.optimization import warmup_linear
-from utils.preprocessing import pad_input_matrix
+from utils.preprocessing import pad_input_matrix, get_coarse_labels
 
 
 class BertHierarchicalTrainer(object):
     def __init__(self, model_coarse, model_fine, optimizer, processor, scheduler, tokenizer, args):
-        self.parent_to_child_index_map = {0:(0,1), 1:(2,3), 2:(4,5)}
         self.args = args
         self.model_coarse = model_coarse
         self.model_fine = model_fine
@@ -52,7 +49,9 @@ class BertHierarchicalTrainer(object):
             logits_fine = self.model_fine(input_ids, input_mask, segment_ids)[0]
 
             # get coarse labels from the fine labels
-            label_ids_coarse = self.get_coarse_labels(label_ids)
+            label_ids_coarse = get_coarse_labels(label_ids, self.args.batch_size, self.args.num_coarse_labels, 
+                                                 self.args.parent_to_child_index_map, 
+                                                 self.args.device)
             # hard-code logits by setting logits of negative coarse labels
             # to large negative number
             logits_fine_masked = self.get_masked_logits(label_ids, logits_fine)
@@ -63,17 +62,17 @@ class BertHierarchicalTrainer(object):
                     pos_weight_coarse = torch.FloatTensor(pos_weights_coarse)
                 else:
                     pos_weight_coarse = torch.ones([self.args.num_coarse_labels])
-                if self.args.pos_weights_fine:
-                    pos_weights_fine = [float(w) for w in self.args.pos_weights_fine.split(',')]
-                    pos_weights_fine = torch.FloatTensor(pos_weights_fine)
+                if self.args.pos_weights:
+                    pos_weights = [float(w) for w in self.args.pos_weights.split(',')]
+                    pos_weights = torch.FloatTensor(pos_weights)
                 else:
-                    pos_weights_fine = torch.ones([self.args.num_fine_labels])
+                    pos_weights = torch.ones([self.args.num_labels])
 
                 criterion_coarse = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_coarse)
                 criterion_coarse = criterion_coarse.to(self.args.device)
                 loss_coarse = criterion_coarse(logits_coarse, label_ids_coarse.float())
 
-                criterion_fine = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights_fine)
+                criterion_fine = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
                 criterion_fine = criterion_fine.to(self.args.device)
                 loss_fine = criterion_fine(logits_fine_masked, label_ids.float())
 
@@ -102,13 +101,6 @@ class BertHierarchicalTrainer(object):
                 self.optimizer_coarse.zero_grad()
                 self.optimizer_fine.zero_grad()
                 self.iterations += 1
-
-    def get_coarse_labels(self, label_ids):
-        coarse_label_ids = torch.empty(self.args.batch_size, self.args.num_coarse_labels, dtype=torch.long, device=self.args.device)
-        for parent_idx, child_idxs in self.parent_to_child_index_map.items():
-            child_labels = torch.index_select(label_ids, 1, torch.tensor(child_idxs, dtype=torch.long))
-            coarse_label_ids[:,parent_idx] = child_labels.byte().any(dim=1)
-        return coarse_label_ids
 
     def get_masked_logits(self, gold_coarse_labels, logits_fine):
         masks = []

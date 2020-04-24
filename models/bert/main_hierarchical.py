@@ -77,6 +77,7 @@ if __name__ == '__main__':
     args.n_gpu = n_gpu
     args.num_labels = dataset_map[args.dataset].NUM_CLASSES
     args.is_multilabel = dataset_map[args.dataset].IS_MULTILABEL
+    args.parent_to_child_index_map = {0: (0, 1), 1: (2, 3), 2: (4, 5)}
 
     if not args.trained_model:
         save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
