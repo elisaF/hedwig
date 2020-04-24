@@ -53,13 +53,13 @@ class BertTrainer(object):
                     else:
                         pos_weight = torch.ones([self.args.num_labels])
                     criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-                    criterion = criterion.cuda()
+                    criterion = criterion.to(self.args.device)
                     loss = criterion(logits, label_ids.float())
                 elif self.args.loss == 'mse':
                     criterion = torch.nn.MSELoss()
-                    criterion = criterion.cuda()
+                    criterion = criterion.to(self.args.device)
                     m = torch.nn.Sigmoid()
-                    m.cuda()
+                    m.to(self.args.device)
                     loss = criterion(m(logits), label_ids.float())
             else:
                 loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))

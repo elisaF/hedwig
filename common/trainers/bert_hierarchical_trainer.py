@@ -1,0 +1,189 @@
+import datetime
+import os
+import time
+
+import torch
+import torch.nn.functional as F
+from torch.utils.data import DataLoader, RandomSampler, TensorDataset
+from tqdm import tqdm
+from tqdm import trange
+
+from common.evaluators.bert_evaluator import BertEvaluator
+from datasets.bert_processors.abstract_processor import convert_examples_to_features
+from datasets.bert_processors.abstract_processor import convert_examples_to_hierarchical_features
+from utils.optimization import warmup_linear
+from utils.preprocessing import pad_input_matrix
+
+
+class BertHierarchicalTrainer(object):
+    def __init__(self, model_coarse, model_fine, optimizer, processor, scheduler, tokenizer, args):
+        self.parent_to_child_index_map = {0:(0,1), 1:(2,3), 2:(4,5)}
+        self.args = args
+        self.model_coarse = model_coarse
+        self.model_fine = model_fine
+        self.optimizer_coarse = optimizer
+        self.optimizer_fine = optimizer
+        self.processor = processor
+        self.scheduler = scheduler
+        self.tokenizer = tokenizer
+        self.train_examples = self.processor.get_train_examples(args.data_dir)
+
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.snapshot_path_coarse = os.path.join(self.args.save_path, self.processor.NAME+'_coarse', '%s.pt' % timestamp)
+        self.snapshot_path_fine = os.path.join(self.args.save_path, self.processor.NAME+'_fine', '%s.pt' % timestamp)
+
+        self.num_train_optimization_steps = int(
+            len(self.train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
+
+        self.log_header = 'Epoch Iteration Progress   Dev/Acc.  Dev/Pr.  Dev/Re.   Dev/F1   Dev/Loss'
+        self.log_template = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f} {:>6.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
+
+        self.iterations, self.nb_tr_steps, self.tr_loss_coarse, self.tr_loss_fine = 0, 0, 0, 0
+        self.best_dev_f1, self.unimproved_iters = 0, 0
+        self.early_stop = False
+
+    def train_epoch(self, train_dataloader):
+        for step, batch in enumerate(tqdm(train_dataloader, desc="Training")):
+            self.model_coarse.train()
+            self.model_fine.train()
+            batch = tuple(t.to(self.args.device) for t in batch)
+            input_ids, input_mask, segment_ids, label_ids = batch
+            logits_coarse = self.model_coarse(input_ids, input_mask, segment_ids)[0] # batch-size, num_classes
+            logits_fine = self.model_fine(input_ids, input_mask, segment_ids)[0]
+
+            # get coarse labels from the fine labels
+            label_ids_coarse = self.get_coarse_labels(label_ids)
+            # hard-code logits by setting logits of negative coarse labels
+            # to large negative number
+            logits_fine_masked = self.get_masked_logits(label_ids, logits_fine)
+
+            if self.args.loss == 'cross-entropy':
+                if self.args.pos_weights_coarse:
+                    pos_weights_coarse = [float(w) for w in self.args.pos_weights_coarse.split(',')]
+                    pos_weight_coarse = torch.FloatTensor(pos_weights_coarse)
+                else:
+                    pos_weight_coarse = torch.ones([self.args.num_coarse_labels])
+                if self.args.pos_weights_fine:
+                    pos_weights_fine = [float(w) for w in self.args.pos_weights_fine.split(',')]
+                    pos_weights_fine = torch.FloatTensor(pos_weights_fine)
+                else:
+                    pos_weights_fine = torch.ones([self.args.num_fine_labels])
+
+                criterion_coarse = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight_coarse)
+                criterion_coarse = criterion_coarse.to(self.args.device)
+                loss_coarse = criterion_coarse(logits_coarse, label_ids_coarse.float())
+
+                criterion_fine = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights_fine)
+                criterion_fine = criterion_fine.to(self.args.device)
+                loss_fine = criterion_fine(logits_fine_masked, label_ids.float())
+
+            elif self.args.loss == 'mse':
+                criterion_coarse = torch.nn.MSELoss()
+                criterion_coarse = criterion_coarse.to(self.args.device)
+
+                criterion_fine = torch.nn.MSELoss()
+                criterion_fine = criterion_fine.to(self.args.device)
+
+                m = torch.nn.Sigmoid()
+                m.to(self.args.device)
+
+                loss_coarse = criterion_coarse(m(logits_coarse), label_ids_coarse.float())
+                loss_fine = criterion_fine(m(logits_fine_masked), label_ids.float())
+
+            loss_coarse.backward()
+            loss_fine.backward()
+            self.tr_loss_coarse += loss_coarse.item()
+            self.tr_loss_fine += loss_fine.item()
+            self.nb_tr_steps += 1
+            if (step + 1) % self.args.gradient_accumulation_steps == 0:
+                self.optimizer_coarse.step()
+                self.optimizer_fine.step()
+                self.scheduler.step()
+                self.optimizer_coarse.zero_grad()
+                self.optimizer_fine.zero_grad()
+                self.iterations += 1
+
+    def get_coarse_labels(self, label_ids):
+        coarse_label_ids = torch.empty(self.args.batch_size, self.args.num_coarse_labels, dtype=torch.long, device=self.args.device)
+        for parent_idx, child_idxs in self.parent_to_child_index_map.items():
+            child_labels = torch.index_select(label_ids, 1, torch.tensor(child_idxs, dtype=torch.long))
+            coarse_label_ids[:,parent_idx] = child_labels.byte().any(dim=1)
+        return coarse_label_ids
+
+    def get_masked_logits(self, gold_coarse_labels, logits_fine):
+        masks = []
+        for parent_idx, child_idxs in self.parent_to_child_index_map.items():
+            masks.append(gold_coarse_labels[:, parent_idx].byte().repeat(len(child_idxs), 1).transpose(0, 1))
+        mask = torch.cat(masks, 1)
+        logits_fine[~mask] = -1e10
+        return logits_fine
+
+    def train(self):
+        if self.args.is_hierarchical:
+            train_features = convert_examples_to_hierarchical_features(
+                self.train_examples, self.args.max_seq_length, self.tokenizer)
+        else:
+            train_features = convert_examples_to_features(
+                self.train_examples, self.args.max_seq_length, self.tokenizer, use_guid=True)
+
+        unpadded_input_ids = [f.input_ids for f in train_features]
+        unpadded_input_mask = [f.input_mask for f in train_features]
+        unpadded_segment_ids = [f.segment_ids for f in train_features]
+
+        if self.args.is_hierarchical:
+            pad_input_matrix(unpadded_input_ids, self.args.max_doc_length)
+            pad_input_matrix(unpadded_input_mask, self.args.max_doc_length)
+            pad_input_matrix(unpadded_segment_ids, self.args.max_doc_length)
+
+        print("Number of examples: ", len(self.train_examples))
+        print("Batch size:", self.args.batch_size)
+        print("Num of steps:", self.num_train_optimization_steps)
+
+        padded_input_ids = torch.tensor(unpadded_input_ids, dtype=torch.long)
+        padded_input_mask = torch.tensor(unpadded_input_mask, dtype=torch.long)
+        padded_segment_ids = torch.tensor(unpadded_segment_ids, dtype=torch.long)
+        label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
+
+        train_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids)
+
+        train_sampler = RandomSampler(train_data)
+        train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.args.batch_size)
+
+        print('Begin training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        start_time = time.monotonic()
+        for epoch in trange(int(self.args.epochs), desc="Epoch"):
+            self.train_epoch(train_dataloader)
+            if self.args.evaluate_dev:
+                dev_evaluator_coarse = BertEvaluator(self.model_coarse, self.processor, self.tokenizer, self.args, split='dev')
+                dev_evaluator_fine = BertEvaluator(self.model_fine, self.processor, self.tokenizer, self.args, split='dev')
+                dev_precision_coarse, dev_recall_coarse, dev_f1_coarse, dev_acc_coarse, dev_loss_coarse, \
+                    _, _, _, _, _, _, _, _, _, _ = dev_evaluator_coarse.get_scores()[0]
+                dev_precision_fine, dev_recall_fine, dev_f1_fine, dev_acc_fine, dev_loss_fine, \
+                _, _, _, _, _, _, _, _, _, _ = dev_evaluator_fine.get_scores()[0]
+
+                # Print validation results
+                tqdm.write('COARSE: '+self.log_header)
+                tqdm.write(self.log_template.format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
+                                                    dev_acc_coarse, dev_precision_coarse, dev_recall_coarse,
+                                                    dev_f1_coarse, dev_loss_coarse))
+                tqdm.write('FINE: ' + self.log_header)
+                tqdm.write(self.log_template.format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
+                                                    dev_acc_fine, dev_precision_fine, dev_recall_fine,
+                                                    dev_f1_fine, dev_loss_fine))
+
+                # Update validation results
+                if dev_f1_fine > self.best_dev_f1:
+                    self.unimproved_iters = 0
+                    self.best_dev_f1 = dev_f1_fine
+                    torch.save(self.model_coarse, self.snapshot_path_coarse)
+                    torch.save(self.model_fine, self.snapshot_path_fine)
+
+                else:
+                    self.unimproved_iters += 1
+                    if self.unimproved_iters >= self.args.patience:
+                        self.early_stop = True
+                        tqdm.write("Early Stopping. Epoch: {}, Best Dev F1: {}".format(epoch, self.best_dev_f1))
+                        break
+        end_time = time.monotonic()
+        print('End training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+        print('Time elapsed: ', end_time-start_time)

@@ -45,5 +45,9 @@ def get_args():
     parser.add_argument('--loss', type=str, default='cross-entropy',
                         choices=['cross-entropy', 'mse'],
                         help='Loss to use during training for multi-label classification.')
+    parser.add_argument('--num_coarse_labels',
+                        type=int,
+                        default=3,
+                        help='Number of coarse-grained labels.')
     args = parser.parse_args()
     return args
