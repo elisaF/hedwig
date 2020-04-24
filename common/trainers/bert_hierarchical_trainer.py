@@ -49,7 +49,7 @@ class BertHierarchicalTrainer(object):
             logits_fine = self.model_fine(input_ids, input_mask, segment_ids)[0]
 
             # get coarse labels from the fine labels
-            label_ids_coarse = get_coarse_labels(label_ids, self.args.batch_size, self.args.num_coarse_labels, 
+            label_ids_coarse = get_coarse_labels(label_ids, self.args.num_coarse_labels,
                                                  self.args.parent_to_child_index_map, 
                                                  self.args.device)
             # hard-code logits by setting logits of negative coarse labels

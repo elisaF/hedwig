@@ -18,8 +18,8 @@ def pad_input_matrix(unpadded_matrix, max_doc_length):
             unpadded_matrix[i0] = unpadded_matrix[i0][:max_doc_length]
 
 
-def get_coarse_labels(label_ids, batch_size, num_coarse_labels, parent_to_child_index_map, device):
-    coarse_label_ids = torch.empty(batch_size, num_coarse_labels, dtype=torch.long, device=device)
+def get_coarse_labels(label_ids, num_coarse_labels, parent_to_child_index_map, device):
+    coarse_label_ids = torch.empty(label_ids.shape[0], num_coarse_labels, dtype=torch.long, device=device)
     for parent_idx, child_idxs in parent_to_child_index_map.items():
         child_labels = torch.index_select(label_ids, 1, torch.tensor(child_idxs, dtype=torch.long, device=device))
         coarse_label_ids[:,parent_idx] = child_labels.byte().any(dim=1)

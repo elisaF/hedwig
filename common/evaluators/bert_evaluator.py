@@ -53,7 +53,7 @@ class BertEvaluator(object):
 
         if self.map_labels:
             # get coarse labels from the fine labels
-            label_ids = get_coarse_labels(label_ids, self.args.batch_size, self.args.num_coarse_labels,
+            label_ids = get_coarse_labels(label_ids, self.args.num_coarse_labels,
                                           self.args.parent_to_child_index_map, device="cpu")
         
         eval_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids, doc_ids)
