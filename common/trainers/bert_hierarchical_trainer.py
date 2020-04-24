@@ -52,9 +52,10 @@ class BertHierarchicalTrainer(object):
             label_ids_coarse = get_coarse_labels(label_ids, self.args.num_coarse_labels,
                                                  self.args.parent_to_child_index_map, 
                                                  self.args.device)
-            # hard-code logits by setting logits of negative coarse labels
-            # to large negative number
-            logits_fine_masked = self.get_masked_logits(label_ids, logits_fine)
+            
+            # calculate weights to ignore invalid 
+            # fine labels based on gold coarse labels
+            fine_loss_weights = self.get_coarse_weights(label_ids_coarse)
 
             if self.args.loss == 'cross-entropy':
                 if self.args.pos_weights_coarse:
@@ -72,22 +73,9 @@ class BertHierarchicalTrainer(object):
                 criterion_coarse = criterion_coarse.to(self.args.device)
                 loss_coarse = criterion_coarse(logits_coarse, label_ids_coarse.float())
 
-                criterion_fine = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+                criterion_fine = torch.nn.BCEWithLogitsLoss(weight=fine_loss_weights, pos_weight=pos_weights)
                 criterion_fine = criterion_fine.to(self.args.device)
-                loss_fine = criterion_fine(logits_fine_masked, label_ids.float())
-
-            elif self.args.loss == 'mse':
-                criterion_coarse = torch.nn.MSELoss()
-                criterion_coarse = criterion_coarse.to(self.args.device)
-
-                criterion_fine = torch.nn.MSELoss()
-                criterion_fine = criterion_fine.to(self.args.device)
-
-                m = torch.nn.Sigmoid()
-                m.to(self.args.device)
-
-                loss_coarse = criterion_coarse(m(logits_coarse), label_ids_coarse.float())
-                loss_fine = criterion_fine(m(logits_fine_masked), label_ids.float())
+                loss_fine = criterion_fine(logits_fine, label_ids.float())
 
             loss_coarse.backward()
             loss_fine.backward()
@@ -102,13 +90,12 @@ class BertHierarchicalTrainer(object):
                 self.optimizer_fine.zero_grad()
                 self.iterations += 1
 
-    def get_masked_logits(self, gold_coarse_labels, logits_fine):
-        masks = []
+    def get_coarse_weights(self, gold_coarse_labels):
+        weights = []
         for parent_idx, child_idxs in self.args.parent_to_child_index_map.items():
-            masks.append(gold_coarse_labels[:, parent_idx].bool().repeat(len(child_idxs), 1).transpose(0, 1))
-        mask = torch.cat(masks, 1)
-        logits_fine[~mask] = (-1e10)
-        return logits_fine
+            weights.append(gold_coarse_labels[:, parent_idx].bool().repeat(len(child_idxs), 1).transpose(0, 1))
+        weight = torch.cat(weights, 1)
+        return weight
 
     def train(self):
         if self.args.is_hierarchical:
