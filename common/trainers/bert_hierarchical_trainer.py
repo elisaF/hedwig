@@ -40,6 +40,7 @@ class BertHierarchicalTrainer(object):
         self.early_stop = False
 
     def train_epoch(self, train_dataloader):
+        self.tr_loss_coarse, self.tr_loss_fine = 0, 0
         for step, batch in enumerate(tqdm(train_dataloader, desc="Training")):
             self.model_coarse.train()
             self.model_fine.train()
@@ -132,6 +133,8 @@ class BertHierarchicalTrainer(object):
         start_time = time.monotonic()
         for epoch in trange(int(self.args.epochs), desc="Epoch"):
             self.train_epoch(train_dataloader)
+            print('COARSE Train loss: ', self.tr_loss_coarse)
+            print('FINE Train loss: ', self.tr_loss_fine)
             if self.args.evaluate_dev:
                 dev_evaluator_coarse = BertEvaluator(self.model_coarse, self.processor,
                                                      self.tokenizer, self.args, split='dev', map_labels=True)
