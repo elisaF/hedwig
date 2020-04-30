@@ -34,6 +34,20 @@ def evaluate_split(model, processor, tokenizer, args, save_file, split='dev', is
         f.write(json.dumps(scores_dict))
 
 
+def create_optimizer_scheduler(model, args, num_train_optimization_steps):
+    param_optimizer = list(model.named_parameters())
+    no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
+    optimizer_grouped_parameters = [
+        {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)],
+         'weight_decay': args.weight_decay},
+        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)],
+         'weight_decay': 0.0}]
+    optimizer = AdamW(optimizer_grouped_parameters, lr=args.lr, correct_bias=False)
+    scheduler = get_linear_schedule_with_warmup(optimizer, num_training_steps=num_train_optimization_steps,
+                                                num_warmup_steps=args.warmup_proportion * num_train_optimization_steps)
+    return optimizer, scheduler
+
+
 if __name__ == '__main__':
     # Set default configuration in args.py
     args = get_args()
@@ -108,19 +122,11 @@ if __name__ == '__main__':
     model_fine.to(device)
 
     # Prepare optimizer
-    param_optimizer = list(model_coarse.named_parameters())
-    no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
-    optimizer_grouped_parameters = [
-        {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)],
-         'weight_decay': args.weight_decay},
-        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)],
-         'weight_decay': 0.0}]
+    optimizer_coarse, scheduler_coarse = create_optimizer_scheduler(model_coarse, args, num_train_optimization_steps)
+    optimizer_fine, scheduler_fine = create_optimizer_scheduler(model_fine, args, num_train_optimization_steps)
 
-    optimizer = AdamW(optimizer_grouped_parameters, lr=args.lr, correct_bias=False)
-    scheduler = get_linear_schedule_with_warmup(optimizer, num_training_steps=num_train_optimization_steps,
-                                                num_warmup_steps=args.warmup_proportion * num_train_optimization_steps)
-
-    trainer = BertHierarchicalTrainer(model_coarse, model_fine, optimizer, processor, scheduler, tokenizer, args)
+    trainer = BertHierarchicalTrainer(model_coarse, model_fine, optimizer_coarse, optimizer_fine, processor,
+                                      scheduler_coarse, scheduler_fine, tokenizer, args)
 
     trainer.train()
     model_coarse = torch.load(trainer.snapshot_path_coarse)

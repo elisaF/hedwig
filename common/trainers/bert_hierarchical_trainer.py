@@ -14,14 +14,15 @@ from utils.preprocessing import pad_input_matrix, get_coarse_labels
 
 
 class BertHierarchicalTrainer(object):
-    def __init__(self, model_coarse, model_fine, optimizer, processor, scheduler, tokenizer, args):
+    def __init__(self, model_coarse, model_fine, optimizer_coarse, optimizer_fine, processor, scheduler_coarse, scheduler_fine, tokenizer, args):
         self.args = args
         self.model_coarse = model_coarse
         self.model_fine = model_fine
-        self.optimizer_coarse = optimizer
-        self.optimizer_fine = optimizer
+        self.optimizer_coarse = optimizer_coarse
+        self.optimizer_fine = optimizer_fine
         self.processor = processor
-        self.scheduler = scheduler
+        self.scheduler_coarse = scheduler_coarse
+        self.scheduler_fine = scheduler_fine
         self.tokenizer = tokenizer
         self.train_examples = self.processor.get_train_examples(args.data_dir)
 
@@ -56,7 +57,7 @@ class BertHierarchicalTrainer(object):
             
             # calculate weights to ignore invalid 
             # fine labels based on gold coarse labels
-            fine_loss_weights = self.get_coarse_weights(label_ids_coarse)
+            fine_loss_weights = self.get_fine_weights(label_ids_coarse)
 
             if self.args.loss == 'cross-entropy':
                 if self.args.pos_weights_coarse:
@@ -86,12 +87,13 @@ class BertHierarchicalTrainer(object):
             if (step + 1) % self.args.gradient_accumulation_steps == 0:
                 self.optimizer_coarse.step()
                 self.optimizer_fine.step()
-                self.scheduler.step()
+                self.scheduler_coarse.step()
+                self.scheduler_fine.step()
                 self.optimizer_coarse.zero_grad()
                 self.optimizer_fine.zero_grad()
                 self.iterations += 1
 
-    def get_coarse_weights(self, gold_coarse_labels):
+    def get_fine_weights(self, gold_coarse_labels):
         weights = []
         for parent_idx, child_idxs in self.args.parent_to_child_index_map.items():
             weights.append(gold_coarse_labels[:, parent_idx].repeat(len(child_idxs), 1).transpose(0, 1))
