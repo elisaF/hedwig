@@ -13,6 +13,7 @@ from datasets.bert_processors.agnews_processor import AGNewsProcessor
 from datasets.bert_processors.imdb_processor import IMDBProcessor
 from datasets.bert_processors.reuters_processor import ReutersProcessor
 from datasets.bert_processors.congressional_hearing_processor import CongressionalHearingProcessor
+from datasets.bert_processors.congressional_hearing_binary_processor import CongressionalHearingBinaryProcessor
 from datasets.bert_processors.sogou_processor import SogouProcessor
 from datasets.bert_processors.sst_processor import SST2Processor
 from datasets.bert_processors.yelp2014_processor import Yelp2014Processor
@@ -56,6 +57,7 @@ if __name__ == '__main__':
         'SST-2': SST2Processor,
         'Reuters': ReutersProcessor,
         'CongressionalHearing': CongressionalHearingProcessor,
+        'CongressionalHearingBinary': CongressionalHearingBinaryProcessor,
         'IMDB': IMDBProcessor,
         'AAPD': AAPDProcessor,
         'AGNews': AGNewsProcessor,
@@ -81,7 +83,10 @@ if __name__ == '__main__':
         os.makedirs(save_path, exist_ok=True)
 
     args.is_hierarchical = False
-    processor = dataset_map[args.dataset]()
+    if args.num_labels == 2:
+        processor = dataset_map[args.dataset](args.binary_label)
+    else:
+        processor = dataset_map[args.dataset]()
     pretrained_vocab_path = args.model
     tokenizer = BertTokenizer.from_pretrained(pretrained_vocab_path)
 
