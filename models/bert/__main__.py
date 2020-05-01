@@ -77,16 +77,20 @@ if __name__ == '__main__':
     args.n_gpu = n_gpu
     args.num_labels = dataset_map[args.dataset].NUM_CLASSES
     args.is_multilabel = dataset_map[args.dataset].IS_MULTILABEL
-
-    if not args.trained_model:
-        save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
-        os.makedirs(save_path, exist_ok=True)
-
     args.is_hierarchical = False
+
     if args.num_labels == 2:
         processor = dataset_map[args.dataset](args.binary_label)
     else:
         processor = dataset_map[args.dataset]()
+
+    if not args.trained_model:
+        if args.num_labels == 2:
+            save_path = os.path.join(args.save_path, processor.NAME)
+        else:
+            save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
+        os.makedirs(save_path, exist_ok=True)
+
     pretrained_vocab_path = args.model
     tokenizer = BertTokenizer.from_pretrained(pretrained_vocab_path)
 
