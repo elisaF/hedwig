@@ -90,7 +90,8 @@ class BertEvaluator(object):
                     loss = criterion(logits.cpu(), label_ids.float().cpu())
                 elif self.args.loss == 'mse':
                     criterion = torch.nn.MSELoss(size_average=False)
-                    loss = criterion(logits.view(-1), label_ids.float().view(-1))
+                    m = torch.nn.Sigmoid()
+                    loss = criterion(m(logits.cpu()), label_ids.float().cpu())
             else:
                 predicted_labels.extend(torch.argmax(logits, dim=1).cpu().detach().numpy())
                 target_labels.extend(torch.argmax(label_ids, dim=1).cpu().detach().numpy())
