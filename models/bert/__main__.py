@@ -80,7 +80,7 @@ if __name__ == '__main__':
     args.is_hierarchical = False
 
     if args.num_labels == 2:
-        processor = dataset_map[args.dataset](args.binary_label)
+        processor = dataset_map[args.dataset](args)
     else:
         processor = dataset_map[args.dataset]()
 
