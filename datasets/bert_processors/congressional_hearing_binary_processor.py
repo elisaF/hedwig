@@ -4,13 +4,13 @@ from datasets.bert_processors.abstract_processor import BertProcessor, InputExam
 
 
 class CongressionalHearingBinaryProcessor(BertProcessor):
+    NUM_CLASSES = 2
+    IS_MULTILABEL = False
 
     def __init__(self, config):
         super().__init__()
         self.NAME = os.path.join('CongressionalHearingBinary', config.binary_label)
-        self.NUM_CLASSES = 2
-        self.IS_MULTILABEL = False
-    
+
     def get_train_examples(self, data_dir):
         return self._create_examples(
             self._read_tsv(os.path.join(data_dir, self.NAME, 'train.tsv')))
