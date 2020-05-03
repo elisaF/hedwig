@@ -113,7 +113,7 @@ if __name__ == '__main__':
         num_train_optimization_steps = int(
             len(train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
 
-    model = BertHierarchical(args)
+    model = BertHierarchical(model=args.model, num_coarse_labels=args.num_coarse_labels)
     model.to(device)
 
     # Prepare optimizer
