@@ -1,15 +1,16 @@
 from torch import nn
-from transformers import BertModel, BertPreTrainedModel
+from transformers import BertModel
 
 
-class BertHierarchical(BertPreTrainedModel):
+class BertHierarchical(nn.Module):
 
-    def __init__(self, config, num_labels, num_coarse_labels):
-        super().__init__(config)
-        self.bert = BertModel.from_pretrained(config.model, num_labels=num_labels)
+    def __init__(self, model_name, num_fine_labels, num_coarse_labels):
+        super().__init__()
 
-        self.classifier_coarse = nn.Linear(config.hidden_size, num_labels)
-        self.classifier_fine = nn.Linear(config.hidden_size, num_coarse_labels)
+        self.bert = BertModel.from_pretrained(model_name, num_labels=num_fine_labels)
+        self.dropout = nn.Dropout(self.bert.config.hidden_dropout_prob)
+        self.classifier_coarse = nn.Linear(self.bert.config.hidden_size, num_coarse_labels)
+        self.classifier_fine = nn.Linear(self.bert.config.hidden_size, num_fine_labels)
 
         self.init_weights()
 
