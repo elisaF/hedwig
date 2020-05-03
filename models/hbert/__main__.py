@@ -143,7 +143,7 @@ if __name__ == '__main__':
         trainer.train()
         model = torch.load(trainer.snapshot_path)
     else:
-        model = model = HierarchicalBert(args.model)
+        model = HierarchicalBert(args.model)
         model_ = torch.load(args, map_location=lambda storage, loc: storage)
         state = {}
         for key in model_.state_dict().keys():

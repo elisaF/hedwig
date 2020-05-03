@@ -3,10 +3,10 @@ import json
 
 import numpy as np
 import torch
-from transformers import AdamW, BertForSequenceClassification, BertTokenizer, get_linear_schedule_with_warmup
+from transformers import AdamW, BertTokenizer, get_linear_schedule_with_warmup
 
 from common.constants import *
-from common.evaluators.bert_evaluator import BertHierarchicalEvaluator
+from common.evaluators.bert_hierarchical_evaluator import BertHierarchicalEvaluator
 from common.trainers.bert_hierarchical_trainer import BertHierarchicalTrainer
 from datasets.bert_processors.aapd_processor import AAPDProcessor
 from datasets.bert_processors.agnews_processor import AGNewsProcessor
@@ -16,7 +16,8 @@ from datasets.bert_processors.congressional_hearing_processor import Congression
 from datasets.bert_processors.sogou_processor import SogouProcessor
 from datasets.bert_processors.sst_processor import SST2Processor
 from datasets.bert_processors.yelp2014_processor import Yelp2014Processor
-from models.bert.args import get_args
+from models.bert_hier.args import get_args
+from models.bert_hier.model import BertHierarchical
 
 
 def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
@@ -112,7 +113,7 @@ if __name__ == '__main__':
         num_train_optimization_steps = int(
             len(train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
 
-    model = BertForSequenceClassification.from_pretrained(args.model, num_labels=args.num_labels)
+    model = BertHierarchical(args.model)
     model.to(device)
 
     # Prepare optimizer

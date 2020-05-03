@@ -1,20 +1,17 @@
-import torch
-import torch.nn.functional as F
 from torch import nn
-from transformers import BertModel, BertForSequenceClassification
-from utils.preprocessing import get_coarse_labels
+from transformers import BertModel
+
 
 class BertHierarchical(nn.Module):
 
     def __init__(self, args, **kwargs):
         super().__init__()
-        self.args = args
-        self.num_coarse_labels = args.num_coarse_labels
-
         self.bert = BertModel.from_pretrained(args.bert_model, num_labels=args.num_labels)
 
         self.classifier_coarse = nn.Linear(args.hidden_size, args.num_labels)
         self.classifier_fine = nn.Linear(args.hidden_size, args.num_coarse_labels)
+
+        self.init_weights()
 
     def forward(self,
                 input_ids=None,
