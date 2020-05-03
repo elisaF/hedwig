@@ -15,7 +15,7 @@ from utils.preprocessing import pad_input_matrix, get_coarse_labels, get_fine_ma
 warnings.filterwarnings('ignore')
 
 
-class BertEvaluator(object):
+class BertHierarchicalEvaluator(object):
     def __init__(self, model, processor, tokenizer, args, split='dev'):
         self.args = args
         self.model = model
