@@ -6,7 +6,7 @@ class BertHierarchical(nn.Module):
 
     def __init__(self, args, **kwargs):
         super().__init__()
-        self.bert = BertModel.from_pretrained(args.bert_model, num_labels=args.num_labels)
+        self.bert = BertModel.from_pretrained(args.model, num_labels=args.num_labels)
 
         self.classifier_coarse = nn.Linear(args.hidden_size, args.num_labels)
         self.classifier_fine = nn.Linear(args.hidden_size, args.num_coarse_labels)
