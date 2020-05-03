@@ -6,7 +6,7 @@ import torch
 from transformers import AdamW, BertForSequenceClassification, BertTokenizer, get_linear_schedule_with_warmup
 
 from common.constants import *
-from common.evaluators.bert_evaluator import BertEvaluator
+from common.evaluators.bert_evaluator import BertHierarchicalEvaluator
 from common.trainers.bert_hierarchical_trainer import BertHierarchicalTrainer
 from datasets.bert_processors.aapd_processor import AAPDProcessor
 from datasets.bert_processors.agnews_processor import AGNewsProcessor
@@ -19,17 +19,19 @@ from datasets.bert_processors.yelp2014_processor import Yelp2014Processor
 from models.bert.args import get_args
 
 
-def evaluate_split(model, processor, tokenizer, args, save_file, split='dev', is_coarse=False):
-    evaluator = BertEvaluator(model, processor, tokenizer, args, split, is_coarse)
-    scores, score_names = evaluator.get_scores(silent=True)
-    precision, recall, f1, accuracy, avg_loss = scores[:5]
-    if is_coarse:
-        print('\n' + 'COARSE: ' + LOG_HEADER)
-    else:
-        print('\n' + 'FINE: ' + LOG_HEADER)
+def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
+    evaluator = BertHierarchicalEvaluator(model, processor, tokenizer, args, split)
+    scores_fine, scores_coarse = evaluator.get_scores(silent=True)
+    print_save_scores(scores_coarse, 'COARSE', save_file+'_coarse', split)
+    print_save_scores(scores_fine, 'FINE', save_file+'_fine', split)
+
+
+def print_save_scores(scores, score_type, save_file, split):
+    precision, recall, f1, accuracy, avg_loss = scores[0][:5]
+    print('\n' + score_type + ': ' + LOG_HEADER)
     print(LOG_TEMPLATE.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
 
-    scores_dict = dict(zip(score_names, scores))
+    scores_dict = dict(zip(scores[1], scores[0]))
     with open(save_file, 'w') as f:
         f.write(json.dumps(scores_dict))
 
@@ -66,10 +68,8 @@ if __name__ == '__main__':
     if n_gpu > 0:
         torch.cuda.manual_seed_all(args.seed)
 
-    metrics_dev_json_coarse = args.metrics_json + '_dev_coarse'
-    metrics_dev_json_fine = args.metrics_json + '_dev_fine'
-    metrics_test_json_coarse = args.metrics_json + '_test_coarse'
-    metrics_test_json_fine = args.metrics_json + '_test_fine'
+    metrics_dev_json = args.metrics_json + '_dev'
+    metrics_test_json = args.metrics_json + '_test'
 
     dataset_map = {
         'SST-2': SST2Processor,
@@ -97,9 +97,7 @@ if __name__ == '__main__':
     args.parent_to_child_index_map = {0: (0, 1), 1: (2, 3), 2: (4, 5)}
 
     if not args.trained_model:
-        save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME+'_coarse')
-        os.makedirs(save_path, exist_ok=True)
-        save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME + '_fine')
+        save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
         os.makedirs(save_path, exist_ok=True)
 
     args.is_hierarchical = False
@@ -114,28 +112,19 @@ if __name__ == '__main__':
         num_train_optimization_steps = int(
             len(train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
 
-    #pretrained_model_path = args.model if os.path.isfile(args.model) else PRETRAINED_MODEL_ARCHIVE_MAP[args.model]
-    pretrained_model_path = args.model
-    model_coarse = BertForSequenceClassification.from_pretrained(pretrained_model_path, num_labels=args.num_coarse_labels)
-    model_fine = BertForSequenceClassification.from_pretrained(pretrained_model_path, num_labels=args.num_labels)
-    model_coarse.to(device)
-    model_fine.to(device)
+    model = BertForSequenceClassification.from_pretrained(args.model, num_labels=args.num_labels)
+    model.to(device)
 
     # Prepare optimizer
-    optimizer_coarse, scheduler_coarse = create_optimizer_scheduler(model_coarse, args, num_train_optimization_steps)
-    optimizer_fine, scheduler_fine = create_optimizer_scheduler(model_fine, args, num_train_optimization_steps)
+    optimizer, scheduler = create_optimizer_scheduler(model, args, num_train_optimization_steps)
 
-    trainer = BertHierarchicalTrainer(model_coarse, model_fine, optimizer_coarse, optimizer_fine, processor,
-                                      scheduler_coarse, scheduler_fine, tokenizer, args)
+    trainer = BertHierarchicalTrainer(model, optimizer, processor,
+                                      scheduler, tokenizer, args)
 
     trainer.train()
-    model_coarse = torch.load(trainer.snapshot_path_coarse)
-    model_fine = torch.load(trainer.snapshot_path_fine)
+    model = torch.load(trainer.snapshot_path)
 
     if args.evaluate_dev:
-        evaluate_split(model_coarse, processor, tokenizer, args, metrics_dev_json_coarse, split='dev', is_coarse=True)
-        evaluate_split(model_fine, processor, tokenizer, args, metrics_dev_json_fine, split='dev')
+        evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
     if args.evaluate_test:
-        evaluate_split(model_coarse, processor, tokenizer, args, metrics_test_json_coarse, split='test')
-        evaluate_split(model_fine, processor, tokenizer, args, metrics_test_json_fine, split='test')
-
+        evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')

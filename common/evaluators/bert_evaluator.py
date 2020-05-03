@@ -16,12 +16,11 @@ warnings.filterwarnings('ignore')
 
 
 class BertEvaluator(object):
-    def __init__(self, model, processor, tokenizer, args, split='dev', map_labels=False):
+    def __init__(self, model, processor, tokenizer, args, split='dev'):
         self.args = args
         self.model = model
         self.processor = processor
         self.tokenizer = tokenizer
-        self.map_labels = map_labels
 
         if split == 'test':
             self.eval_examples = self.processor.get_test_examples(args.data_dir)
@@ -51,11 +50,6 @@ class BertEvaluator(object):
         label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.long)
         doc_ids = torch.tensor([f.guid for f in eval_features], dtype=torch.long)
 
-        if self.map_labels:
-            # get coarse labels from the fine labels
-            label_ids = get_coarse_labels(label_ids, self.args.num_coarse_labels,
-                                          self.args.parent_to_child_index_map, device="cpu")
-        
         eval_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids, doc_ids)
         eval_sampler = SequentialSampler(eval_data)
         eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=self.args.batch_size)

@@ -10,25 +10,22 @@ from tqdm import trange
 from common.evaluators.bert_evaluator import BertEvaluator
 from datasets.bert_processors.abstract_processor import convert_examples_to_features
 from datasets.bert_processors.abstract_processor import convert_examples_to_hierarchical_features
-from utils.preprocessing import pad_input_matrix, get_coarse_labels
+from utils.preprocessing import pad_input_matrix, get_coarse_labels, get_fine_mask
 
 
 class BertHierarchicalTrainer(object):
-    def __init__(self, model_coarse, model_fine, optimizer_coarse, optimizer_fine, processor, scheduler_coarse, scheduler_fine, tokenizer, args):
+    def __init__(self, model, optimizer, processor, scheduler, tokenizer, args):
         self.args = args
-        self.model_coarse = model_coarse
-        self.model_fine = model_fine
-        self.optimizer_coarse = optimizer_coarse
-        self.optimizer_fine = optimizer_fine
+        self.model = model
+        self.model_fine = model
+        self.optimizer = optimizer
         self.processor = processor
-        self.scheduler_coarse = scheduler_coarse
-        self.scheduler_fine = scheduler_fine
+        self.scheduler = scheduler
         self.tokenizer = tokenizer
         self.train_examples = self.processor.get_train_examples(args.data_dir)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        self.snapshot_path_coarse = os.path.join(self.args.save_path, self.processor.NAME+'_coarse', '%s.pt' % timestamp)
-        self.snapshot_path_fine = os.path.join(self.args.save_path, self.processor.NAME+'_fine', '%s.pt' % timestamp)
+        self.snapshot_path = os.path.join(self.args.save_path, self.processor.NAME, '%s.pt' % timestamp)
 
         self.num_train_optimization_steps = int(
             len(self.train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
@@ -43,21 +40,19 @@ class BertHierarchicalTrainer(object):
     def train_epoch(self, train_dataloader):
         self.tr_loss_coarse, self.tr_loss_fine = 0, 0
         for step, batch in enumerate(tqdm(train_dataloader, desc="Training")):
-            self.model_coarse.train()
-            self.model_fine.train()
+            self.model.train()
             batch = tuple(t.to(self.args.device) for t in batch)
             input_ids, input_mask, segment_ids, label_ids = batch
-            logits_coarse = self.model_coarse(input_ids, input_mask, segment_ids)[0] # batch-size, num_classes
-            logits_fine = self.model_fine(input_ids, input_mask, segment_ids)[0]
+            logits_coarse, logits_fine = self.model(input_ids, input_mask, segment_ids)  # batch-size, num_classes
 
             # get coarse labels from the fine labels
             label_ids_coarse = get_coarse_labels(label_ids, self.args.num_coarse_labels,
                                                  self.args.parent_to_child_index_map, 
                                                  self.args.device)
             
-            # calculate weights to ignore invalid 
+            # calculate mask to ignore invalid
             # fine labels based on gold coarse labels
-            fine_loss_weights = self.get_fine_weights(label_ids_coarse)
+            fine_loss_mask = get_fine_mask(label_ids_coarse, self.args.parent_to_child_index_map)
 
             if self.args.loss == 'cross-entropy':
                 if self.args.pos_weights_coarse:
@@ -75,30 +70,21 @@ class BertHierarchicalTrainer(object):
                 criterion_coarse = criterion_coarse.to(self.args.device)
                 loss_coarse = criterion_coarse(logits_coarse, label_ids_coarse.float())
 
-                criterion_fine = torch.nn.BCEWithLogitsLoss(weight=fine_loss_weights, pos_weight=pos_weights)
+                criterion_fine = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
                 criterion_fine = criterion_fine.to(self.args.device)
                 loss_fine = criterion_fine(logits_fine, label_ids.float())
+                loss_fine[~fine_loss_mask] = float('-inf')
 
-            loss_coarse.backward()
-            loss_fine.backward()
+            loss_total = torch.sum(loss_coarse, loss_fine)
+            loss_total.backward()
             self.tr_loss_coarse += loss_coarse.item()
             self.tr_loss_fine += loss_fine.item()
             self.nb_tr_steps += 1
             if (step + 1) % self.args.gradient_accumulation_steps == 0:
-                self.optimizer_coarse.step()
-                self.optimizer_fine.step()
-                self.scheduler_coarse.step()
-                self.scheduler_fine.step()
-                self.optimizer_coarse.zero_grad()
-                self.optimizer_fine.zero_grad()
+                self.optimizer.step()
+                self.scheduler.step()
+                self.optimizer.zero_grad()
                 self.iterations += 1
-
-    def get_fine_weights(self, gold_coarse_labels):
-        weights = []
-        for parent_idx, child_idxs in self.args.parent_to_child_index_map.items():
-            weights.append(gold_coarse_labels[:, parent_idx].repeat(len(child_idxs), 1).transpose(0, 1))
-        weight = torch.cat(weights, 1)
-        return weight.float()
 
     def train(self):
         if self.args.is_hierarchical:

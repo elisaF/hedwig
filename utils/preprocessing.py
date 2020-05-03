@@ -24,3 +24,11 @@ def get_coarse_labels(label_ids, num_coarse_labels, parent_to_child_index_map, d
         child_labels = torch.index_select(label_ids, 1, torch.tensor(child_idxs, dtype=torch.long, device=device))
         coarse_label_ids[:,parent_idx] = child_labels.byte().any(dim=1)
     return coarse_label_ids
+
+
+def get_fine_mask(gold_coarse_labels, parent_to_child_index_map):
+    masks = []
+    for parent_idx, child_idxs in parent_to_child_index_map.items():
+        masks.append(gold_coarse_labels[:, parent_idx].repeat(len(child_idxs), 1).transpose(0, 1).bool())
+    mask = torch.cat(masks, 1)
+    return mask

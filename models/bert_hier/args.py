@@ -45,8 +45,16 @@ def get_args():
                         type=str,
                         default=None,
                         help='Comma-separated weights for positive examples in each class to use during the loss')
+    parser.add_argument('--pos_weights_coarse',
+                        type=str,
+                        default=None,
+                        help='Comma-separated weights for positive examples in each coarse class to use during the loss')
     parser.add_argument('--loss', type=str, default='cross-entropy',
                         choices=['cross-entropy', 'mse'],
                         help='Loss to use during training for multi-label classification.')
+    parser.add_argument('--num_coarse_labels',
+                        type=int,
+                        default=3,
+                        help='Number of coarse-grained labels.')
     args = parser.parse_args()
     return args
