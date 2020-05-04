@@ -53,7 +53,6 @@ class BertHierarchicalTrainer(object):
             # calculate mask to ignore invalid
             # fine labels based on gold coarse labels
             mask_fine = get_fine_mask(label_ids_coarse, self.args.parent_to_child_index_map)
-            logits_fine[~mask_fine] = float('-inf')
 
             if self.args.loss == 'cross-entropy':
                 if self.args.pos_weights_coarse:
@@ -71,7 +70,7 @@ class BertHierarchicalTrainer(object):
                 criterion_coarse = criterion_coarse.to(self.args.device)
                 loss_coarse = criterion_coarse(logits_coarse, label_ids_coarse.float())
 
-                criterion_fine = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+                criterion_fine = torch.nn.BCEWithLogitsLoss(weight=mask_fine.float(), pos_weight=pos_weights)
                 criterion_fine = criterion_fine.to(self.args.device)
                 loss_fine = criterion_fine(logits_fine, label_ids.float())
 

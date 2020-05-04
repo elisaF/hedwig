@@ -12,8 +12,6 @@ class BertHierarchical(nn.Module):
         self.classifier_coarse = nn.Linear(self.bert.config.hidden_size, num_coarse_labels)
         self.classifier_fine = nn.Linear(self.bert.config.hidden_size, num_fine_labels)
 
-        self.init_weights()
-
     def forward(self,
                 input_ids=None,
                 attention_mask=None,
