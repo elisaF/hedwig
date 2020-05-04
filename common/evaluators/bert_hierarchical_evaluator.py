@@ -7,8 +7,7 @@ from sklearn import metrics
 from torch.utils.data import DataLoader, SequentialSampler, TensorDataset
 from tqdm import tqdm
 
-from datasets.bert_processors.abstract_processor import convert_examples_to_features, \
-    convert_examples_to_hierarchical_features
+from datasets.bert_processors.abstract_processor import convert_examples_to_features
 from utils.preprocessing import pad_input_matrix, get_coarse_labels, get_fine_mask
 
 # Suppress warnings from sklearn.metrics
@@ -28,21 +27,12 @@ class BertHierarchicalEvaluator(object):
             self.eval_examples = self.processor.get_dev_examples(args.data_dir)
 
     def get_scores(self, silent=False):
-        if self.args.is_hierarchical:
-            eval_features = convert_examples_to_hierarchical_features(
-                self.eval_examples, self.args.max_seq_length, self.tokenizer)
-        else:
-            eval_features = convert_examples_to_features(
-                self.eval_examples, self.args.max_seq_length, self.tokenizer, use_guid=True)
+        eval_features = convert_examples_to_features(self.eval_examples, self.args.max_seq_length,
+                                                     self.tokenizer, use_guid=True)
 
         unpadded_input_ids = [f.input_ids for f in eval_features]
         unpadded_input_mask = [f.input_mask for f in eval_features]
         unpadded_segment_ids = [f.segment_ids for f in eval_features]
-
-        if self.args.is_hierarchical:
-            pad_input_matrix(unpadded_input_ids, self.args.max_doc_length)
-            pad_input_matrix(unpadded_input_mask, self.args.max_doc_length)
-            pad_input_matrix(unpadded_segment_ids, self.args.max_doc_length)
 
         padded_input_ids = torch.tensor(unpadded_input_ids, dtype=torch.long)
         padded_input_mask = torch.tensor(unpadded_input_mask, dtype=torch.long)
@@ -73,18 +63,21 @@ class BertHierarchicalEvaluator(object):
             with torch.no_grad():
                 logits_coarse, logits_fine = self.model(input_ids, input_mask, segment_ids)
 
-            predicted_labels_coarse.extend(F.sigmoid(logits_coarse).round().long().cpu().detach().numpy())
+            preds_coarse = F.sigmoid(logits_coarse).round().long().cpu().detach().numpy()
+            predicted_labels_coarse.extend(preds_coarse)
             # get coarse labels from the fine labels
             label_ids_coarse = get_coarse_labels(label_ids_fine, self.args.num_coarse_labels,
-                                                 self.args.parent_to_child_index_map, device="cpu")
+                                                 self.args.parent_to_child_index_map, self.args.device)
 
             target_labels_coarse.extend(label_ids_coarse.cpu().detach().numpy())
 
             # mask fine predictions using coarse predictions
-            preds_fine = F.sigmoid(logits_coarse).round().long().cpu().detach().numpy()
-            mask = get_fine_mask(label_ids_coarse, self.args.parent_to_child_index_map)
+            preds_fine = F.sigmoid(logits_fine).round().long().cpu().detach().numpy()
+            mask = get_fine_mask(torch.Tensor(preds_coarse), self.args.parent_to_child_index_map)
             preds_fine[~mask] = 0
             predicted_labels_fine.extend(preds_fine)
+
+            target_labels_fine.extend(label_ids_fine.cpu().detach().numpy())
 
             if self.args.loss == 'cross-entropy':
                 criterion = torch.nn.BCEWithLogitsLoss(size_average=False)

@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader, RandomSampler, TensorDataset
 from tqdm import tqdm
 from tqdm import trange
 
-from common.evaluators.bert_evaluator import BertEvaluator
+from common.evaluators.bert_hierarchical_evaluator import BertHierarchicalEvaluator
 from datasets.bert_processors.abstract_processor import convert_examples_to_features
 from datasets.bert_processors.abstract_processor import convert_examples_to_hierarchical_features
 from utils.preprocessing import pad_input_matrix, get_coarse_labels, get_fine_mask
@@ -52,7 +52,8 @@ class BertHierarchicalTrainer(object):
             
             # calculate mask to ignore invalid
             # fine labels based on gold coarse labels
-            fine_loss_mask = get_fine_mask(label_ids_coarse, self.args.parent_to_child_index_map)
+            mask_fine = get_fine_mask(label_ids_coarse, self.args.parent_to_child_index_map)
+            logits_fine[~mask_fine] = float('-inf')
 
             if self.args.loss == 'cross-entropy':
                 if self.args.pos_weights_coarse:
@@ -73,9 +74,8 @@ class BertHierarchicalTrainer(object):
                 criterion_fine = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
                 criterion_fine = criterion_fine.to(self.args.device)
                 loss_fine = criterion_fine(logits_fine, label_ids.float())
-                loss_fine[~fine_loss_mask] = float('-inf')
 
-            loss_total = torch.sum(loss_coarse, loss_fine)
+            loss_total = loss_coarse + loss_fine
             loss_total.backward()
             self.tr_loss_coarse += loss_coarse.item()
             self.tr_loss_fine += loss_fine.item()
@@ -124,14 +124,11 @@ class BertHierarchicalTrainer(object):
             print('COARSE Train loss: ', self.tr_loss_coarse)
             print('FINE Train loss: ', self.tr_loss_fine)
             if self.args.evaluate_dev:
-                dev_evaluator_coarse = BertEvaluator(self.model_coarse, self.processor,
-                                                     self.tokenizer, self.args, split='dev', map_labels=True)
-                dev_evaluator_fine = BertEvaluator(self.model_fine, self.processor,
-                                                   self.tokenizer, self.args, split='dev')
-                dev_precision_coarse, dev_recall_coarse, dev_f1_coarse, dev_acc_coarse, dev_loss_coarse = \
-                    dev_evaluator_coarse.get_scores()[0][:5]
-                dev_precision_fine, dev_recall_fine, dev_f1_fine, dev_acc_fine, dev_loss_fine = \
-                    dev_evaluator_fine.get_scores()[0][:5]
+                dev_evaluator = BertHierarchicalEvaluator(self.model, self.processor,
+                                                     self.tokenizer, self.args, split='dev')
+                scores_fine, scores_coarse = dev_evaluator.get_scores(silent=True)
+                dev_precision_fine, dev_recall_fine, dev_f1_fine, dev_acc_fine, dev_loss_fine = scores_fine[0][:5]
+                dev_precision_coarse, dev_recall_coarse, dev_f1_coarse, dev_acc_coarse, dev_loss_coarse = scores_coarse[0][:5]
 
                 # Print validation results
                 tqdm.write('COARSE: '+self.log_header)
@@ -147,8 +144,7 @@ class BertHierarchicalTrainer(object):
                 if dev_f1_fine > self.best_dev_f1:
                     self.unimproved_iters = 0
                     self.best_dev_f1 = dev_f1_fine
-                    torch.save(self.model_coarse, self.snapshot_path_coarse)
-                    torch.save(self.model_fine, self.snapshot_path_fine)
+                    torch.save(self.model, self.snapshot_path)
 
                 else:
                     self.unimproved_iters += 1
