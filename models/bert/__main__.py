@@ -79,13 +79,13 @@ if __name__ == '__main__':
     args.is_multilabel = dataset_map[args.dataset].IS_MULTILABEL
     args.is_hierarchical = False
 
-    if args.num_labels == 2:
+    if args.num_labels == 1:
         processor = dataset_map[args.dataset](args)
     else:
         processor = dataset_map[args.dataset]()
 
     if not args.trained_model:
-        if args.num_labels == 2:
+        if args.num_labels == 1:
             save_path = os.path.join(args.save_path, processor.NAME)
         else:
             save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
