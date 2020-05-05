@@ -71,8 +71,6 @@ class BertEvaluator(object):
             with torch.no_grad():
                 if self.args.num_labels > 2:
                     logits = self.model(input_ids, input_mask, segment_ids)[0]
-                else:
-                    loss, logits = self.model(input_ids, input_mask, segment_ids, labels=label_ids)[:2]
 
             if self.args.is_multilabel:
                 predicted_labels.extend(F.sigmoid(logits).round().long().cpu().detach().numpy())
@@ -92,7 +90,11 @@ class BertEvaluator(object):
             else:
                 predicted_labels.extend(torch.argmax(logits, dim=1).cpu().detach().numpy())
                 target_labels.extend(torch.argmax(label_ids, dim=1).cpu().detach().numpy())
-                loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))
+                if self.args.num_labels > 2:
+                    loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))
+                else:
+                    loss_fct = torch.nn.CrossEntropyLoss()
+                    loss = loss_fct(logits.view(-1, self.args.num_labels), label_ids.view(-1))
 
             if self.args.n_gpu > 1:
                 loss = loss.mean()
