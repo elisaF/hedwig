@@ -43,27 +43,29 @@ class BertTrainer(object):
             self.model.train()
             batch = tuple(t.to(self.args.device) for t in batch)
             input_ids, input_mask, segment_ids, label_ids = batch
-            logits = self.model(input_ids, input_mask, segment_ids)[0]
+            if self.args.num_labels > 1:
+                logits = self.model(input_ids, input_mask, segment_ids)[0]
 
-            if self.args.is_multilabel:
-                if self.args.loss == 'cross-entropy':
-                    if self.args.pos_weights:
-                        pos_weights = [float(w) for w in self.args.pos_weights.split(',')]
-                        pos_weight = torch.FloatTensor(pos_weights)
-                    else:
-                        pos_weight = torch.ones([self.args.num_labels])
-                    criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-                    criterion = criterion.to(self.args.device)
-                    loss = criterion(logits, label_ids.float())
-                elif self.args.loss == 'mse':
-                    criterion = torch.nn.MSELoss()
-                    criterion = criterion.to(self.args.device)
-                    m = torch.nn.Sigmoid()
-                    m.to(self.args.device)
-                    loss = criterion(m(logits), label_ids.float())
+                if self.args.is_multilabel:
+                    if self.args.loss == 'cross-entropy':
+                        if self.args.pos_weights:
+                            pos_weights = [float(w) for w in self.args.pos_weights.split(',')]
+                            pos_weight = torch.FloatTensor(pos_weights)
+                        else:
+                            pos_weight = torch.ones([self.args.num_labels])
+                        criterion = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+                        criterion = criterion.to(self.args.device)
+                        loss = criterion(logits, label_ids.float())
+                    elif self.args.loss == 'mse':
+                        criterion = torch.nn.MSELoss()
+                        criterion = criterion.to(self.args.device)
+                        m = torch.nn.Sigmoid()
+                        m.to(self.args.device)
+                        loss = criterion(m(logits), label_ids.float())
+                else:
+                    loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))
             else:
-                loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))
-
+                loss = self.model(input_ids, input_mask, segment_ids, labels=label_ids)[0]
             if self.args.n_gpu > 1:
                 loss = loss.mean()
             if self.args.gradient_accumulation_steps > 1:

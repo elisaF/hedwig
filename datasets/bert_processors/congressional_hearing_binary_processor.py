@@ -4,7 +4,7 @@ from datasets.bert_processors.abstract_processor import BertProcessor, InputExam
 
 
 class CongressionalHearingBinaryProcessor(BertProcessor):
-    NUM_CLASSES = 2
+    NUM_CLASSES = 1
     IS_MULTILABEL = False
 
     def __init__(self, config):
