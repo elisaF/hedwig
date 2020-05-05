@@ -65,7 +65,7 @@ class BertTrainer(object):
                 else:
                     loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))
             else:
-                loss = self.model(input_ids, input_mask, segment_ids, labels=label_ids.float())[0]
+                loss = self.model(input_ids, input_mask, segment_ids, labels=label_ids)[0]
             if self.args.n_gpu > 1:
                 loss = loss.mean()
             if self.args.gradient_accumulation_steps > 1:
