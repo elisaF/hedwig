@@ -69,7 +69,7 @@ class BertEvaluator(object):
             target_doc_ids.extend(doc_ids.tolist())
 
             with torch.no_grad():
-                if self.args.num_labels > 1:
+                if self.args.num_labels > 2:
                     logits = self.model(input_ids, input_mask, segment_ids)[0]
                 else:
                     loss, logits = self.model(input_ids, input_mask, segment_ids, labels=label_ids.float())[:2]

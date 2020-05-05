@@ -43,7 +43,7 @@ class BertTrainer(object):
             self.model.train()
             batch = tuple(t.to(self.args.device) for t in batch)
             input_ids, input_mask, segment_ids, label_ids = batch
-            if self.args.num_labels > 1:
+            if self.args.num_labels > 2:
                 logits = self.model(input_ids, input_mask, segment_ids)[0]
 
                 if self.args.is_multilabel:
