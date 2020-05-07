@@ -123,8 +123,8 @@ class BertTrainer(object):
         print('Begin training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         start_time = time.monotonic()
         for epoch in trange(int(self.args.epochs), desc="Epoch"):
-            print('Train loss: ', self.tr_loss)
             self.train_epoch(train_dataloader)
+            print('Train loss: ', self.tr_loss)
             if self.args.evaluate_dev:
                 dev_evaluator = BertEvaluator(self.model, self.processor, self.tokenizer, self.args, split='dev')
                 dev_precision, dev_recall, dev_f1, dev_acc, dev_loss, \
