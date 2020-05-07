@@ -48,6 +48,6 @@ def get_args():
     parser.add_argument('--loss', type=str, default='cross-entropy',
                         choices=['cross-entropy', 'mse'],
                         help='Loss to use during training for multi-label classification.')
-    parser.add_argument('--use-question', action='store_true')
+    parser.add_argument('--use-second-input', action='store_true')
     args = parser.parse_args()
     return args

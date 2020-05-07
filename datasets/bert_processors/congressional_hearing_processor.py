@@ -10,7 +10,7 @@ class CongressionalHearingProcessor(BertProcessor):
 
     def __init__(self, config=None):
         super().__init__()
-        self.use_text_b = config.use_text_b
+        self.use_text_b = config.use_second_input
 
     def get_train_examples(self, data_dir):
         return self._create_examples(
