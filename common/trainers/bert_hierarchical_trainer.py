@@ -72,7 +72,7 @@ class BertHierarchicalTrainer(object):
 
                 criterion_fine = torch.nn.BCEWithLogitsLoss(pos_weight=pos_weights)
                 criterion_fine = criterion_fine.to(self.args.device)
-                logits_fine[~mask_fine] = float('-inf')
+                logits_fine[~mask_fine] = -10000  # instead of -inf so loss is not nan
                 loss_fine = criterion_fine(logits_fine, label_ids.float())
 
             loss_total = loss_coarse + loss_fine
