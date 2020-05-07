@@ -8,9 +8,9 @@ class CongressionalHearingProcessor(BertProcessor):
     NUM_CLASSES = 6
     IS_MULTILABEL = True
 
-    def __init__(self, use_text_b=False):
+    def __init__(self, config=None):
         super().__init__()
-        self.use_text_b = use_text_b
+        self.use_text_b = config.use_text_b
 
     def get_train_examples(self, data_dir):
         return self._create_examples(
