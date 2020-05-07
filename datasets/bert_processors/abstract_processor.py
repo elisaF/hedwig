@@ -124,9 +124,9 @@ def convert_examples_to_features(examples, max_seq_length, tokenizer, print_exam
         else:
             # Account for [CLS] and [SEP] with "- 2"
             if len(tokens_a) > max_seq_length - 2:
-                tokens_a = tokens_a[:(max_seq_length - 2)]
                 print('Truncating example', example.guid, 'from ', len(tokens_a), 'to', (max_seq_length - 2))
                 print('Truncated text is ', tokens_a[(max_seq_length - 2):])
+                tokens_a = tokens_a[:(max_seq_length - 2)]
 
         # The convention in BERT is:
         # (a) For sequence pairs:
@@ -212,17 +212,12 @@ def convert_examples_to_hierarchical_features(examples, max_seq_length, tokenize
             tokens_b = [tokenizer.tokenize(line) for line in sent_tokenize(example.text_b)]
             # Modifies `tokens_a` and `tokens_b` in place so that the total length is less than the specified length
             # Account for [CLS], [SEP], [SEP]
-            print('Truncating example', example.guid, 'from ', len(tokens_a)+len(tokens_b), 'to', (max_seq_length - 3))
-            removed_tokens_a, removed_tokens_b = _truncate_seq_pair(tokens_a, tokens_b, max_seq_length - 3)
-            print('Truncated text a: ', removed_tokens_a)
-            print('Truncated text b: ', removed_tokens_b)
+            _truncate_seq_pair(tokens_a, tokens_b, max_seq_length - 3)
         else:
             # Account for [CLS] and [SEP]
             for i0 in range(len(tokens_a)):
                 if len(tokens_a[i0]) > max_seq_length - 2:
                     tokens_a[i0] = tokens_a[i0][:(max_seq_length - 2)]
-                    print('Truncating example', example.guid, 'from ', len(tokens_a), 'to', (max_seq_length - 2))
-                    print('Truncated text is ', tokens_a[(max_seq_length - 2):])
 
         tokens = [[tokenizer.cls_token] + line + [tokenizer.sep_token] for line in tokens_a]
         segment_ids = [[0] * len(line) for line in tokens]
