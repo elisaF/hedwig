@@ -39,6 +39,7 @@ class BertTrainer(object):
         self.early_stop = False
 
     def train_epoch(self, train_dataloader):
+        self.tr_loss = 0
         for step, batch in enumerate(tqdm(train_dataloader, desc="Training")):
             self.model.train()
             batch = tuple(t.to(self.args.device) for t in batch)
@@ -76,7 +77,6 @@ class BertTrainer(object):
                 self.optimizer.backward(loss)
             else:
                 loss.backward()
-
             self.tr_loss += loss.item()
             self.nb_tr_steps += 1
             if (step + 1) % self.args.gradient_accumulation_steps == 0:
@@ -123,6 +123,7 @@ class BertTrainer(object):
         print('Begin training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         start_time = time.monotonic()
         for epoch in trange(int(self.args.epochs), desc="Epoch"):
+            print('Train loss: ', self.tr_loss)
             self.train_epoch(train_dataloader)
             if self.args.evaluate_dev:
                 dev_evaluator = BertEvaluator(self.model, self.processor, self.tokenizer, self.args, split='dev')
