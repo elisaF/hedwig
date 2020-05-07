@@ -206,12 +206,17 @@ def convert_examples_to_hierarchical_features(examples, max_seq_length, tokenize
             tokens_b = [tokenizer.tokenize(line) for line in sent_tokenize(example.text_b)]
             # Modifies `tokens_a` and `tokens_b` in place so that the total length is less than the specified length
             # Account for [CLS], [SEP], [SEP]
-            _truncate_seq_pair(tokens_a, tokens_b, max_seq_length - 3)
+            print('Truncating example', example.guid, 'from ', len(tokens_a)+len(tokens_b), 'to', (max_seq_length - 3))
+            removed_tokens_a, removed_tokens_b = _truncate_seq_pair(tokens_a, tokens_b, max_seq_length - 3)
+            print('Truncated text a: ', removed_tokens_a)
+            print('Truncated text b: ', removed_tokens_b)
         else:
             # Account for [CLS] and [SEP]
             for i0 in range(len(tokens_a)):
                 if len(tokens_a[i0]) > max_seq_length - 2:
                     tokens_a[i0] = tokens_a[i0][:(max_seq_length - 2)]
+                    print('Truncating example', example.guid, 'from ', len(tokens_a), 'to', (max_seq_length - 2))
+                    print('Truncated text is ', tokens_a[(max_seq_length - 2):])
 
         tokens = [[tokenizer.cls_token] + line + [tokenizer.sep_token] for line in tokens_a]
         segment_ids = [[0] * len(line) for line in tokens]
@@ -263,11 +268,15 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
     # one token at a time. This makes more sense than truncating an equal percent
     # of tokens from each, since if one sequence is very short then each token
     # that's truncated likely contains more information than a longer sequence.
+    removed_tokens_a = []
+    removed_tokens_b = []
     while True:
         total_length = len(tokens_a) + len(tokens_b)
         if total_length <= max_length:
             break
         if len(tokens_a) > len(tokens_b):
-            tokens_a.pop()
+            removed_tokens_a.append(tokens_a.pop())
         else:
-            tokens_b.pop()
+            removed_tokens_b.append(tokens_b.pop())
+    return removed_tokens_a, removed_tokens_b
+
