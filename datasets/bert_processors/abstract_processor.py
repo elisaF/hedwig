@@ -120,8 +120,7 @@ def convert_examples_to_features(examples, max_seq_length, tokenizer, print_exam
             orig_len_b = len(tokens_b)
             removed_tokens_a, removed_tokens_b = _truncate_seq_pair(tokens_a, tokens_b, max_seq_length - 3)
             if removed_tokens_a:
-               print('Truncating example', example.guid, 'from ', orig_len_a + orig_len_b, 'to',
-                  (max_seq_length - 3))
+                print('Truncating example', example.guid, 'from ', orig_len_a + orig_len_b, 'to', (max_seq_length - 3))
                 print('Truncated text a: ', removed_tokens_a)
                 print('Truncated text b: ', removed_tokens_b)
         else:
