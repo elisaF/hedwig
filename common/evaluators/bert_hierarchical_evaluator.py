@@ -73,8 +73,8 @@ class BertHierarchicalEvaluator(object):
 
             # mask fine predictions using coarse predictions
             preds_fine = F.sigmoid(logits_fine).round().long().cpu().detach().numpy()
-            mask = get_fine_mask(torch.Tensor(preds_coarse), self.args.parent_to_child_index_map)
-            preds_fine[~mask] = 0
+            mask_fine = get_fine_mask(torch.Tensor(preds_coarse), self.args.parent_to_child_index_map)
+            preds_fine[~mask_fine] = 0
             predicted_labels_fine.extend(preds_fine)
 
             target_labels_fine.extend(label_ids_fine.cpu().detach().numpy())
