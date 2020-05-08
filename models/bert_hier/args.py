@@ -56,5 +56,6 @@ def get_args():
                         type=int,
                         default=3,
                         help='Number of coarse-grained labels.')
+    parser.add_argument('--use-second-input', action='store_true')
     args = parser.parse_args()
     return args

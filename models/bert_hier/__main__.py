@@ -102,7 +102,7 @@ if __name__ == '__main__':
         os.makedirs(save_path, exist_ok=True)
 
     args.is_hierarchical = False
-    processor = dataset_map[args.dataset]()
+    processor = dataset_map[args.dataset](args)
     pretrained_vocab_path = args.model
     tokenizer = BertTokenizer.from_pretrained(pretrained_vocab_path)
 
