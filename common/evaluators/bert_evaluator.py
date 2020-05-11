@@ -113,29 +113,48 @@ class BertEvaluator(object):
         cm = metrics.multilabel_confusion_matrix(target_labels, predicted_labels)
         accuracy = metrics.accuracy_score(target_labels, predicted_labels)
 
-        precision_micro = metrics.precision_score(target_labels, predicted_labels, average='micro')
-        recall_micro = metrics.recall_score(target_labels, predicted_labels, average='micro')
-        f1_micro = metrics.f1_score(target_labels, predicted_labels, average='micro')
+        if self.args.num_labels == 2:
+            precision = metrics.precision_score(target_labels, predicted_labels, average='binary')
+            recall = metrics.recall_score(target_labels, predicted_labels, average='binary')
+            f1 = metrics.f1_score(target_labels, predicted_labels, average='binary')
+        else:
+            precision_micro = metrics.precision_score(target_labels, predicted_labels, average='micro')
+            recall_micro = metrics.recall_score(target_labels, predicted_labels, average='micro')
+            f1_micro = metrics.f1_score(target_labels, predicted_labels, average='micro')
 
-        precision_macro = metrics.precision_score(target_labels, predicted_labels, average='macro')
-        recall_macro = metrics.recall_score(target_labels, predicted_labels, average='macro')
-        f1_macro = metrics.f1_score(target_labels, predicted_labels, average='macro')
+            precision_macro = metrics.precision_score(target_labels, predicted_labels, average='macro')
+            recall_macro = metrics.recall_score(target_labels, predicted_labels, average='macro')
+            f1_macro = metrics.f1_score(target_labels, predicted_labels, average='macro')
 
-        precision_class, recall_class, f1_class, support_class = metrics.precision_recall_fscore_support(target_labels,
-                                                                                                         predicted_labels)
+            precision_class, recall_class, f1_class, support_class = metrics.precision_recall_fscore_support(
+                target_labels,
+                predicted_labels)
         avg_loss = total_loss / nb_eval_steps
 
-        return [precision_macro, recall_macro, f1_macro,
-                accuracy,
-                avg_loss,
-                hamming_loss,
-                precision_micro, recall_micro, f1_micro,
-                precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
-                cm.tolist(), list(zip(target_doc_ids, target_label_sets, predicted_label_sets))], \
-               ['precision_macro', 'recall_macro', 'f1_macro',
-                'accuracy',
-                'avg_loss',
-                'hamming_loss',
-                'precision_micro', 'recall_micro', 'f1_micro',
-                'precision_class', 'recall_class', 'f1_class', 'support_class',
-                'confusion_matrix', 'label_set_info (id/gold/pred)']
+        if self.args.num_labels == 2:
+            score_values = [precision, recall, f1,
+                            accuracy,
+                            avg_loss,
+                            hamming_loss,
+                            cm.tolist(), list(zip(target_doc_ids, target_label_sets, predicted_label_sets))]
+            score_names = ['precision', 'recall', 'f1',
+                           'accuracy',
+                           'avg_loss',
+                           'hamming_loss',
+                           'confusion_matrix', 'label_set_info (id/gold/pred)']
+        else:
+            score_values = [precision_macro, recall_macro, f1_macro,
+                            accuracy,
+                            avg_loss,
+                            hamming_loss,
+                            precision_micro, recall_micro, f1_micro,
+                            precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
+                            cm.tolist(), list(zip(target_doc_ids, target_label_sets, predicted_label_sets))]
+            score_names = ['precision_macro', 'recall_macro', 'f1_macro',
+                           'accuracy',
+                           'avg_loss',
+                           'hamming_loss',
+                           'precision_micro', 'recall_micro', 'f1_micro',
+                           'precision_class', 'recall_class', 'f1_class', 'support_class',
+                           'confusion_matrix', 'label_set_info (id/gold/pred)']
+        return score_values, score_names
