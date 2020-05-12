@@ -7,8 +7,7 @@ from transformers import AdamW, get_linear_schedule_with_warmup, \
     BertForSequenceClassification, BertTokenizer,\
     XLNetForSequenceClassification, XLNetTokenizer,\
     RobertaForSequenceClassification, RobertaTokenizer,\
-    AlbertForSequenceClassification, AlbertTokenizer,\
-    BartForSequenceClassification, BartTokenizer
+    AlbertForSequenceClassification, AlbertTokenizer
 
 from common.constants import *
 from common.evaluators.bert_evaluator import BertEvaluator
@@ -74,18 +73,16 @@ if __name__ == '__main__':
         'bert': BertForSequenceClassification,
         'xlnet': XLNetForSequenceClassification,
         'roberta': RobertaForSequenceClassification,
-        'albert': AlbertForSequenceClassification,
-        'bart': BartForSequenceClassification
+        'albert': AlbertForSequenceClassification
     }
     
     tokenizer_map = {
         'bert': BertTokenizer,
         'xlnet': XLNetTokenizer,
         'roberta': RobertaTokenizer,
-        'albert': AlbertTokenizer,
-        'bart': BartTokenizer
+        'albert': AlbertTokenizer
     }
-    
+
     if args.gradient_accumulation_steps < 1:
         raise ValueError("Invalid gradient_accumulation_steps parameter: {}, should be >= 1".format(
                             args.gradient_accumulation_steps))
