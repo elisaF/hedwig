@@ -43,7 +43,7 @@ class BertHierarchicalTrainer(object):
             self.model.train()
             batch = tuple(t.to(self.args.device) for t in batch)
             input_ids, input_mask, segment_ids, label_ids = batch
-            logits_coarse, logits_fine = self.model(input_ids, input_mask, segment_ids)  # batch-size, num_classes
+            logits_coarse, logits_fine = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)  # batch-size, num_classes
 
             # get coarse labels from the fine labels
             label_ids_coarse = get_coarse_labels(label_ids, self.args.num_coarse_labels,
