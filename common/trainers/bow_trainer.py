@@ -68,8 +68,7 @@ class BagOfWordsTrainer(object):
         for epoch in trange(int(self.args.epochs), desc="Epoch"):
             self.train_epoch(train_dataloader)
             dev_evaluator = BagOfWordsEvaluator(self.model, self.vectorizer, self.processor, self.args, split='dev')
-            dev_precision, dev_recall, dev_f1, dev_acc, dev_loss, \
-                _, _, _, _, _, _, _, _, _, _ = dev_evaluator.get_scores()[0]
+            dev_precision, dev_recall, dev_f1, dev_acc, dev_loss = dev_evaluator.get_scores()[0][:5]
 
             # Print validation results
             tqdm.write(self.log_header)
