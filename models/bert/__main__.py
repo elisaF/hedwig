@@ -3,7 +3,12 @@ import json
 
 import numpy as np
 import torch
-from transformers import AdamW, BertForSequenceClassification, BertTokenizer, get_linear_schedule_with_warmup
+from transformers import AdamW, get_linear_schedule_with_warmup, \
+    BertForSequenceClassification, BertTokenizer,\
+    XLNetForSequenceClassification, XLNetTokenizer,\
+    RobertaForSequenceClassification, RobertaTokenizer,\
+    AlbertForSequenceClassification, AlbertTokenizer,\
+    BartForSequenceClassification, BartTokenizer
 
 from common.constants import *
 from common.evaluators.bert_evaluator import BertEvaluator
@@ -65,6 +70,22 @@ if __name__ == '__main__':
         'Sogou': SogouProcessor
     }
 
+    model_map = {
+        'bert': BertForSequenceClassification,
+        'xlnet': XLNetForSequenceClassification,
+        'roberta': RobertaForSequenceClassification,
+        'albert': AlbertForSequenceClassification,
+        'bart': BartForSequenceClassification
+    }
+    
+    tokenizer_map = {
+        'bert': BertTokenizer,
+        'xlnet': XLNetTokenizer,
+        'roberta': RobertaTokenizer,
+        'albert': AlbertTokenizer,
+        'bart': BartTokenizer
+    }
+    
     if args.gradient_accumulation_steps < 1:
         raise ValueError("Invalid gradient_accumulation_steps parameter: {}, should be >= 1".format(
                             args.gradient_accumulation_steps))
@@ -89,7 +110,6 @@ if __name__ == '__main__':
         os.makedirs(save_path, exist_ok=True)
 
     pretrained_vocab_path = args.model
-    tokenizer = BertTokenizer.from_pretrained(pretrained_vocab_path)
 
     train_examples = None
     num_train_optimization_steps = None
@@ -99,7 +119,9 @@ if __name__ == '__main__':
             len(train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
 
     pretrained_model_path = args.model
-    model = BertForSequenceClassification.from_pretrained(pretrained_model_path, num_labels=args.num_labels)
+
+    tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path)
+    model = model_map[args.model_family].from_pretrained(pretrained_model_path, num_labels=args.num_labels)
 
     if args.fp16:
         model.half()
