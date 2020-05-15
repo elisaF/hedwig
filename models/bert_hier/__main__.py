@@ -3,7 +3,7 @@ import json
 
 import numpy as np
 import torch
-from transformers import AdamW, BertTokenizer, get_linear_schedule_with_warmup
+from transformers import AdamW, BertTokenizer, RobertaTokenizer, get_linear_schedule_with_warmup
 
 from common.constants import *
 from common.evaluators.bert_hierarchical_evaluator import BertHierarchicalEvaluator
@@ -83,6 +83,11 @@ if __name__ == '__main__':
         'Sogou': SogouProcessor
     }
 
+    tokenizer_map = {
+        'bert': BertTokenizer,
+        'roberta': RobertaTokenizer
+    }
+
     if args.gradient_accumulation_steps < 1:
         raise ValueError("Invalid gradient_accumulation_steps parameter: {}, should be >= 1".format(
                             args.gradient_accumulation_steps))
@@ -104,7 +109,7 @@ if __name__ == '__main__':
     args.is_hierarchical = False
     processor = dataset_map[args.dataset](args)
     pretrained_vocab_path = args.model
-    tokenizer = BertTokenizer.from_pretrained(pretrained_vocab_path)
+    tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path)
 
     train_examples = None
     num_train_optimization_steps = None
