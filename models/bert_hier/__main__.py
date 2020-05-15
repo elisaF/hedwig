@@ -3,7 +3,7 @@ import json
 
 import numpy as np
 import torch
-from transformers import AdamW, BertTokenizer, RobertaTokenizer, get_linear_schedule_with_warmup
+from transformers import AdamW, BertTokenizer, RobertaTokenizer, XLNetTokenizer, get_linear_schedule_with_warmup
 
 from common.constants import *
 from common.evaluators.bert_hierarchical_evaluator import BertHierarchicalEvaluator
@@ -85,7 +85,8 @@ if __name__ == '__main__':
 
     tokenizer_map = {
         'bert': BertTokenizer,
-        'roberta': RobertaTokenizer
+        'roberta': RobertaTokenizer,
+        'xlnet': XLNetTokenizer
     }
 
     if args.gradient_accumulation_steps < 1:

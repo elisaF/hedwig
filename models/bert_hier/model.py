@@ -1,5 +1,5 @@
-from torch import nn
-from transformers import BertModel, RobertaModel
+from torch import nn, tanh
+from transformers import BertModel, RobertaModel, XLNetModel
 
 
 class BertHierarchical(nn.Module):
@@ -9,13 +9,18 @@ class BertHierarchical(nn.Module):
 
         model_map = {
             'bert': BertModel,
-            'roberta': RobertaModel
+            'roberta': RobertaModel,
+            'xlnet': XLNetModel
         }
-
+        self.model_family = model_family
         self.bert = model_map[model_family].from_pretrained(model_name, num_labels=num_fine_labels)
-        self.dropout = nn.Dropout(self.bert.config.hidden_dropout_prob)
-        self.classifier_coarse = nn.Linear(self.bert.config.hidden_size, num_coarse_labels)
-        self.classifier_fine = nn.Linear(self.bert.config.hidden_size, num_fine_labels)
+        if self.model_family == 'bert':
+            self.dropout = nn.Dropout(self.bert.config.hidden_dropout_prob)
+            self.classifier_coarse = nn.Linear(self.bert.config.hidden_size, num_coarse_labels)
+            self.classifier_fine = nn.Linear(self.bert.config.hidden_size, num_fine_labels)
+        elif self.model_family == 'roberta':
+            self.dense = nn.Linear(self.bert.config.hidden_size, self.bert.config.hidden_size)
+            self.classifier = RobertaClassificationHeads(self.bert.config)
 
     def forward(self,
                 input_ids=None,
@@ -30,7 +35,7 @@ class BertHierarchical(nn.Module):
         and each element is a line, i.e., a bert_batch,
         which consists of input_ids, input_mask, segment_ids, label_ids
         """
-        
+
         outputs = self.bert(
             input_ids,
             attention_mask=attention_mask,
@@ -40,11 +45,36 @@ class BertHierarchical(nn.Module):
             inputs_embeds=inputs_embeds,
         )
 
-        pooled_output = outputs[1]
+        if self.model_family == 'roberta':
+            sequence_output = outputs[0]
+            logits_coarse, logits_fine = self.classifier(sequence_output)
 
-        pooled_output = self.dropout(pooled_output)
+        elif self.model_family == 'bert':
+            pooled_output = outputs[1]
+            pooled_output = self.dropout(pooled_output)
 
-        logits_coarse = self.classifier_coarse(pooled_output)
-        logits_fine = self.classifier_fine(pooled_output)
+            logits_coarse = self.classifier_coarse(pooled_output)
+            logits_fine = self.classifier_fine(pooled_output)
 
+        return logits_coarse, logits_fine
+
+
+class RobertaClassificationHeads(nn.Module):
+    """Head for sentence-level classification tasks."""
+
+    def __init__(self, config):
+        super().__init__()
+        self.dense = nn.Linear(config.hidden_size, config.hidden_size)
+        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.classifier_coarse = nn.Linear(config.hidden_size, config.num_labels)
+        self.classifier_fine = nn.Linear(config.hidden_size, config.num_labels)
+
+    def forward(self, features, **kwargs):
+        x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
+        x = self.dropout(x)
+        x = self.dense(x)
+        x = tanh(x)
+        output = self.dropout(x)
+        logits_coarse = self.classifier_coarse(output)
+        logits_fine = self.classifier_fine(output)
         return logits_coarse, logits_fine
