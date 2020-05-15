@@ -20,7 +20,7 @@ class BertHierarchical(nn.Module):
             self.classifier_fine = nn.Linear(self.bert.config.hidden_size, num_fine_labels)
         elif self.model_family == 'roberta':
             self.dense = nn.Linear(self.bert.config.hidden_size, self.bert.config.hidden_size)
-            self.classifier = RobertaClassificationHeads(self.bert.config)
+            self.classifier = RobertaClassificationHeads(self.bert.config, num_coarse_labels, num_fine_labels)
 
     def forward(self,
                 input_ids=None,
@@ -62,12 +62,12 @@ class BertHierarchical(nn.Module):
 class RobertaClassificationHeads(nn.Module):
     """Head for sentence-level classification tasks."""
 
-    def __init__(self, config):
+    def __init__(self, config, num_coarse_labels, num_fine_labels):
         super().__init__()
         self.dense = nn.Linear(config.hidden_size, config.hidden_size)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
-        self.classifier_coarse = nn.Linear(config.hidden_size, config.num_labels)
-        self.classifier_fine = nn.Linear(config.hidden_size, config.num_labels)
+        self.classifier_coarse = nn.Linear(config.hidden_size, num_coarse_labels)
+        self.classifier_fine = nn.Linear(config.hidden_size, num_fine_labels)
 
     def forward(self, features, **kwargs):
         x = features[:, 0, :]  # take <s> token (equiv. to [CLS])
