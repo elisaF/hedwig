@@ -17,7 +17,7 @@ from datasets.bert_processors.sogou_processor import SogouProcessor
 from datasets.bert_processors.sst_processor import SST2Processor
 from datasets.bert_processors.yelp2014_processor import Yelp2014Processor
 from models.bert_hier.args import get_args
-from models.bert_hier.model import BertHierarchical
+from models.bert_hier.model import BertHierarchical, RobertaHierarchical, XLNetHierarchical
 
 
 def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
@@ -89,6 +89,12 @@ if __name__ == '__main__':
         'xlnet': XLNetTokenizer
     }
 
+    model_map = {
+        'bert': BertHierarchical,
+        'roberta': RobertaHierarchical,
+        'xlnet': XLNetHierarchical
+    }
+
     if args.gradient_accumulation_steps < 1:
         raise ValueError("Invalid gradient_accumulation_steps parameter: {}, should be >= 1".format(
                             args.gradient_accumulation_steps))
@@ -119,8 +125,8 @@ if __name__ == '__main__':
         num_train_optimization_steps = int(
             len(train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
 
-    model = BertHierarchical(model_family=args.model_family, model_name=args.model,
-                             num_fine_labels=args.num_labels, num_coarse_labels=args.num_coarse_labels)
+    model = model_map[args.model_family](model_name=args.model,
+                                         num_fine_labels=args.num_labels, num_coarse_labels=args.num_coarse_labels)
     model.to(device)
 
     # Prepare optimizer
