@@ -52,8 +52,7 @@ class RobertaHierarchical(nn.Module):
 
         self.roberta = RobertaModel.from_pretrained(model_name, num_labels=num_fine_labels)
         self.dropout = nn.Dropout(self.roberta.config.hidden_dropout_prob)
-        self.classifier_coarse = nn.Linear(self.roberta.config.hidden_size, num_coarse_labels)
-        self.classifier_fine = nn.Linear(self.roberta.config.hidden_size, num_fine_labels)
+        self.classifier = RobertaClassificationHeads(self.roberta.config, num_coarse_labels, num_fine_labels)
 
     def forward(
             self,
@@ -80,8 +79,7 @@ class RobertaHierarchical(nn.Module):
             inputs_embeds=inputs_embeds,
         )
         sequence_output = outputs[0]
-        logits_coarse = self.classifier_coarse(sequence_output)
-        logits_fine = self.classifier_fine(sequence_output)
+        logits_coarse, logits_fine = self.classifier(sequence_output)
 
         return logits_coarse, logits_fine
 
