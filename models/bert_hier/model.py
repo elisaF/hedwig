@@ -1,5 +1,6 @@
 from torch import nn, tanh
 from transformers import BertModel, RobertaModel, XLNetModel
+from transformers.modeling_utils import SequenceSummary
 
 
 class BertHierarchical(nn.Module):
@@ -21,6 +22,10 @@ class BertHierarchical(nn.Module):
         elif self.model_family == 'roberta':
             self.dense = nn.Linear(self.bert.config.hidden_size, self.bert.config.hidden_size)
             self.classifier = RobertaClassificationHeads(self.bert.config, num_coarse_labels, num_fine_labels)
+        elif self.model_family == 'xlnet':
+            self.sequence_summary = SequenceSummary(self.bert.config)
+            self.classifier_coarse = nn.Linear(self.bert.config.d_model, num_coarse_labels)
+            self.classifier_fine = nn.Linear(self.bert.config.d_model, num_fine_labels)
 
     def forward(self,
                 input_ids=None,
@@ -48,6 +53,12 @@ class BertHierarchical(nn.Module):
         if self.model_family == 'roberta':
             sequence_output = outputs[0]
             logits_coarse, logits_fine = self.classifier(sequence_output)
+
+        elif self.model_family == 'xlnet':
+            output = outputs[0]
+            output = self.sequence_summary(output)
+            logits_coarse = self.classifier_coarse(output)
+            logits_fine = self.classifier_fine(output)
 
         elif self.model_family == 'bert':
             pooled_output = outputs[1]
