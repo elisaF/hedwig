@@ -120,6 +120,15 @@ if __name__ == '__main__':
     tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path)
     model = model_map[args.model_family].from_pretrained(pretrained_model_path, num_labels=args.num_labels)
 
+    # hacky fix for error in transformers code
+    # that triggers error "Assertion srcIndex < srcSelectDimSize failed"
+    # https://github.com/huggingface/transformers/issues/1538#issuecomment-570260748
+    if args.model_family == 'roberta':
+        model.roberta.config.type_vocab_size = 2
+        single_emb = model.roberta.embeddings.token_type_embeddings
+        model.roberta.embeddings.token_type_embeddings = torch.nn.Embedding(2, single_emb.embedding_dim)
+        model.roberta.embeddings.token_type_embeddings.weight = torch.nn.Parameter(single_emb.weight.repeat([2, 1]))
+
     if args.fp16:
         model.half()
     model.to(device)
