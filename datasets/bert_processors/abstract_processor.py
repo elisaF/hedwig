@@ -280,6 +280,6 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
         if len(tokens_a) > len(tokens_b):
             removed_tokens_a.append(tokens_a.pop())
         else:
-            removed_tokens_b.append(tokens_b.pop(0))
+            removed_tokens_b.append(tokens_b.pop())
     return removed_tokens_a, removed_tokens_b
 
