@@ -42,18 +42,18 @@ def get_args():
                              '0 (default value): dynamic loss scaling.\n'
                              'Positive power of 2: static loss scaling value.\n')
 
-    parser.add_argument('--pos_weights',
+    parser.add_argument('--pos-weights',
                         type=str,
                         default=None,
                         help='Comma-separated weights for positive examples in each class to use during the loss')
-    parser.add_argument('--pos_weights_coarse',
+    parser.add_argument('--pos-weights-coarse',
                         type=str,
                         default=None,
                         help='Comma-separated weights for positive examples in each coarse class to use during the loss')
     parser.add_argument('--loss', type=str, default='cross-entropy',
                         choices=['cross-entropy', 'mse'],
                         help='Loss to use during training for multi-label classification.')
-    parser.add_argument('--num_coarse_labels',
+    parser.add_argument('--num-coarse-labels',
                         type=int,
                         default=3,
                         help='Number of coarse-grained labels.')
