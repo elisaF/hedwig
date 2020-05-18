@@ -123,7 +123,7 @@ if __name__ == '__main__':
     # hacky fix for error in transformers code
     # that triggers error "Assertion srcIndex < srcSelectDimSize failed"
     # https://github.com/huggingface/transformers/issues/1538#issuecomment-570260748
-    if args.model_family == 'roberta':
+    if args.model_family == 'roberta' and args.use_second_input:
         model.roberta.config.type_vocab_size = 2
         single_emb = model.roberta.embeddings.token_type_embeddings
         model.roberta.embeddings.token_type_embeddings = torch.nn.Embedding(2, single_emb.embedding_dim)
