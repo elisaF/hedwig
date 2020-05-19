@@ -51,9 +51,7 @@ def create_optimizer_scheduler(model, args, num_train_optimization_steps):
     return optimizer, scheduler
 
 
-if __name__ == '__main__':
-    # Set default configuration in args.py
-    args = get_args()
+def run_main(args):
     print('Args: ', args)
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
     n_gpu = torch.cuda.device_count()
@@ -142,3 +140,9 @@ if __name__ == '__main__':
         evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
     if args.evaluate_test:
         evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
+
+
+if __name__ == '__main__':
+    # Set default configuration in args.py
+    args = get_args()
+    run_main(args)

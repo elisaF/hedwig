@@ -1,4 +1,4 @@
-from models.bert.__main__ import run_main
+from models.bert_hier.__main__ import run_main
 from models.bert.args import get_args
 from utils.postprocessing import process_json_results
 
