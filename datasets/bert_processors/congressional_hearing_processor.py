@@ -10,7 +10,7 @@ class CongressionalHearingProcessor(BertProcessor):
     def __init__(self, config=None):
         super().__init__()
         self.use_text_b = config.use_second_input
-        if config.fold_num > 0:
+        if config.fold_num >= 0:
             self.NAME = os.path.join('CongressionalHearingFolds', 'fold'+str(config.fold_num))
         else:
             self.NAME = 'CongressionalHearing'
