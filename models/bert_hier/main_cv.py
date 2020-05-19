@@ -1,5 +1,5 @@
 from models.bert_hier.__main__ import run_main
-from models.bert.args import get_args
+from models.bert_hier.args import get_args
 from utils.postprocessing import process_json_results
 
 if __name__ == '__main__':
