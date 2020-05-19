@@ -106,13 +106,14 @@ def run_main(args):
     args.num_labels = dataset_map[args.dataset].NUM_CLASSES
     args.is_multilabel = dataset_map[args.dataset].IS_MULTILABEL
     args.parent_to_child_index_map = {0: (0, 1), 1: (2, 3), 2: (4, 5)}
+    args.is_hierarchical = False
+
+    processor = dataset_map[args.dataset](args)
 
     if not args.trained_model:
-        save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
+        save_path = os.path.join(args.save_path, processor.NAME)
         os.makedirs(save_path, exist_ok=True)
 
-    args.is_hierarchical = False
-    processor = dataset_map[args.dataset](args)
     pretrained_vocab_path = args.model
     tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path)
 
