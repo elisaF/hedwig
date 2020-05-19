@@ -7,8 +7,9 @@ if __name__ == '__main__':
     if args.num_folds < 2:
         raise ValueError("Number of folds must be greater than 1!", args.num_folds)
 
+    orig_metrics_json = args.metrics_json
     for fold in range(0, args.num_folds):
         args.fold_num = fold
-        if args.metrics_json:
-            args.metrics_json = args.metrics_json + '_' + str(fold)
+        if orig_metrics_json:
+            args.metrics_json = orig_metrics_json + '_' + str(fold)
         run_main(args)
