@@ -26,7 +26,6 @@ class BertTrainer(object):
         self.train_examples = self.processor.get_train_examples(args.data_dir)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        os.makedirs(os.path.join(self.args.save_path, self.processor.NAME), exist_ok=True)
         self.snapshot_path = os.path.join(self.args.save_path, self.processor.NAME, '%s.pt' % timestamp)
 
         self.num_train_optimization_steps = int(
