@@ -17,16 +17,13 @@ def get_files_with_pattern(dir_, pattern):
 
 
 def process_json_results(json_prefix, save_file, split, label_suffix=''):
-    json_pattern = json_prefix+'*.json_' + split
+    json_pattern = json_prefix+'_fold*' + split
     json_files = get_files_with_pattern('.', json_pattern)
     results_dict = process_model_results(json_files, label_suffix)
     with open(save_file, 'w') as f:
-        header_row = (list(results_dict.values())[0].keys())
-        w = csv.writer(f)
-        w.writerow(header_row)
-        for results in results_dict.items():
-            row = results.values()
-            w.writerow(row)
+        w = csv.writer(f, delimiter='\t')
+        w.writerow(results_dict.keys())
+        w.writerow(results_dict.values())
 
 
 def process_model_results(json_files, label_suffix):
@@ -67,13 +64,14 @@ if __name__ == '__main__':
 
     orig_metrics_json = args.metrics_json
     for fold in range(0, args.num_folds):
+        print('On fold', str(fold))
         args.fold_num = fold
         if orig_metrics_json:
             args.metrics_json = orig_metrics_json + '_fold' + str(fold)
         run_main(args)
 
     # summarize fold results and save to file
-    process_json_results(orig_metrics_json, orig_metrics_json+'_summary', 'test')
+    process_json_results(orig_metrics_json, orig_metrics_json+'_summary.tsv', 'test')
 
 
 
