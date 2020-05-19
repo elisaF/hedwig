@@ -11,5 +11,4 @@ if __name__ == '__main__':
         args.fold_num = fold
         if args.metrics_json:
             args.metrics_json = args.metrics_json + '_' + str(fold)
-        main_single_fold = __main__()
-        main_single_fold.run_main(args)
+        __main__.run_main(args)
