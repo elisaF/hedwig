@@ -98,10 +98,7 @@ def run_main(args):
     processor = dataset_map[args.dataset](args)
 
     if not args.trained_model:
-        if args.num_labels == 2:
-            save_path = os.path.join(args.save_path, processor.NAME)
-        else:
-            save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
+        save_path = os.path.join(args.save_path, processor.NAME)
         os.makedirs(save_path, exist_ok=True)
 
     pretrained_vocab_path = args.model

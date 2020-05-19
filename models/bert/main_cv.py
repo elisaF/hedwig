@@ -1,4 +1,4 @@
-import __main__
+from models.bert.__main__ import run_main
 from models.bert.args import get_args
 
 if __name__ == '__main__':
@@ -11,4 +11,4 @@ if __name__ == '__main__':
         args.fold_num = fold
         if args.metrics_json:
             args.metrics_json = args.metrics_json + '_' + str(fold)
-        __main__.run_main(args)
+        run_main(args)
