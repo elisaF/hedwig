@@ -10,6 +10,6 @@ if __name__ == '__main__':
     for fold in range(0, args.num_folds):
         args.fold_num = fold
         if args.metrics_json:
-            args.metrics_json = args.metrics_json + '_' + fold
+            args.metrics_json = args.metrics_json + '_' + str(fold)
         main_single_fold = __main__()
         main_single_fold.run_main(args)
