@@ -153,5 +153,9 @@ class BertHierarchicalTrainer(object):
                         tqdm.write("Early Stopping. Epoch: {}, Best Dev F1: {}".format(epoch, self.best_dev_f1))
                         break
         end_time = time.monotonic()
+        # save model at end of training
+        # when evaluating on test
+        if self.args.evaluate_test:
+            torch.save(self.model, self.snapshot_path)
         print('End training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         print('Time elapsed: ', end_time-start_time)
