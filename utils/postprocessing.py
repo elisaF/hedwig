@@ -16,7 +16,7 @@ def get_files_with_pattern(dir_, pattern):
 
 
 def process_json_results(json_prefix, save_file, split, label_suffix=''):
-    json_pattern = json_prefix+'_fold*' + split
+    json_pattern = json_prefix+'_fold*' + split + '*' + label_suffix
     json_files = get_files_with_pattern('.', json_pattern)
     results_dict = process_model_results(json_files, label_suffix)
     with open(save_file, 'w') as f:
