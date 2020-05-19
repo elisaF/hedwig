@@ -11,5 +11,5 @@ if __name__ == '__main__':
     for fold in range(0, args.num_folds):
         args.fold_num = fold
         if orig_metrics_json:
-            args.metrics_json = orig_metrics_json + '_' + str(fold)
+            args.metrics_json = orig_metrics_json + '_fold' + str(fold)
         run_main(args)
