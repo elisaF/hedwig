@@ -4,30 +4,35 @@ from datasets.bert_processors.abstract_processor import BertProcessor, InputExam
 
 
 class CongressionalHearingProcessor(BertProcessor):
-    NAME = 'CongressionalHearing'
     NUM_CLASSES = 6
     IS_MULTILABEL = True
 
     def __init__(self, config=None):
         super().__init__()
         self.use_text_b = config.use_second_input
+        if config.fold_num > 0:
+            self.NAME = os.path.join('CongressionalHearingFolds', 'fold'+str(config.fold_num))
+        else:
+            self.NAME = 'CongressionalHearing'
 
     def get_train_examples(self, data_dir):
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, 'CongressionalHearing', 'train.tsv')))
+            self._read_tsv(os.path.join(data_dir, self.NAME, 'train.tsv')))
 
     def get_dev_examples(self, data_dir):
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, 'CongressionalHearing', 'dev.tsv')))
+            self._read_tsv(os.path.join(data_dir, self.NAME, 'dev.tsv')))
 
     def get_test_examples(self, data_dir):
         return self._create_examples(
-            self._read_tsv(os.path.join(data_dir, 'CongressionalHearing', 'test.tsv')))
+            self._read_tsv(os.path.join(data_dir, self.NAME, 'test.tsv')))
 
     def _create_examples(self, lines):
         examples = []
         text_b = None
         for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
             guid = line[0]
             text_a = line[2]
             label = line[1]

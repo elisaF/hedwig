@@ -23,7 +23,7 @@ from datasets.bert_processors.sst_processor import SST2Processor
 from datasets.bert_processors.yelp2014_processor import Yelp2014Processor
 from models.bert.args import get_args
 
-
+    
 def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
     evaluator = BertEvaluator(model, processor, tokenizer, args, split)
     scores, score_names = evaluator.get_scores(silent=True)
@@ -36,9 +36,7 @@ def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
         f.write(json.dumps(scores_dict))
 
 
-if __name__ == '__main__':
-    # Set default configuration in args.py
-    args = get_args()
+def run_main(args):
     print('Args: ', args)
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
     n_gpu = torch.cuda.device_count()
@@ -75,7 +73,7 @@ if __name__ == '__main__':
         'roberta': RobertaForSequenceClassification,
         'albert': AlbertForSequenceClassification
     }
-    
+
     tokenizer_map = {
         'bert': BertTokenizer,
         'xlnet': XLNetTokenizer,
@@ -85,7 +83,7 @@ if __name__ == '__main__':
 
     if args.gradient_accumulation_steps < 1:
         raise ValueError("Invalid gradient_accumulation_steps parameter: {}, should be >= 1".format(
-                            args.gradient_accumulation_steps))
+            args.gradient_accumulation_steps))
 
     if args.dataset not in dataset_map:
         raise ValueError('Unrecognized dataset')
@@ -187,3 +185,8 @@ if __name__ == '__main__':
     if args.evaluate_test:
         evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
 
+
+if __name__ == '__main__':
+    # Set default configuration in args.py
+    args = get_args()
+    run_main(args)
