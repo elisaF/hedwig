@@ -58,5 +58,6 @@ def get_args():
                         default=3,
                         help='Number of coarse-grained labels.')
     parser.add_argument('--use-second-input', action='store_true')
+    parser.add_argument('--second-input-column', type=int, default=3)
     args = parser.parse_args()
     return args
