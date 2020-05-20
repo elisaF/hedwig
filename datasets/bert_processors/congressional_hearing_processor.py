@@ -38,7 +38,7 @@ class CongressionalHearingProcessor(BertProcessor):
             text_a = line[2]
             label = line[1]
             if self.use_text_b:
-                text_b = line[self.second_input_column]
+                text_b = line[self.column_text_b]
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
