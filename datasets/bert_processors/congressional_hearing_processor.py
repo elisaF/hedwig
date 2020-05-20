@@ -10,6 +10,7 @@ class CongressionalHearingProcessor(BertProcessor):
     def __init__(self, config=None):
         super().__init__()
         self.use_text_b = config.use_second_input
+        self.column_text_b = config.second_input_column
         if config.fold_num >= 0:
             self.NAME = os.path.join('CongressionalHearingFolds', 'fold'+str(config.fold_num))
         else:
@@ -37,7 +38,7 @@ class CongressionalHearingProcessor(BertProcessor):
             text_a = line[2]
             label = line[1]
             if self.use_text_b:
-                text_b = line[3]
+                text_b = line[self.second_input_column]
             examples.append(
                 InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label))
         return examples
