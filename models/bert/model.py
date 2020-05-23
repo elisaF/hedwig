@@ -1,18 +1,18 @@
 from torch import nn
-from transformers import ElectraModel
+from transformers import ElectraModel, ElectraPreTrainedModel
 
 
-class ElectraForSequenceClassification(nn.Module):
+class ElectraForSequenceClassification(ElectraPreTrainedModel):
 
-    def __init__(self, model_name, num_labels):
-        super().__init__()
-        self.num_labels = num_labels
+    def __init__(self, config):
+        super().__init__(config)
+        self.num_labels = config.num_labels
 
-        self.electra = ElectraModel.from_pretrained(model_name, num_labels=num_labels)
-        self.dropout = nn.Dropout(self.electra.config.hidden_dropout_prob)
-        self.classifier = nn.Linear(self.electra.config.hidden_size, self.electra.config.num_labels)
+        self.electra = ElectraModel(config)
+        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.classifier = nn.Linear(config.hidden_size, self.config.num_labels)
 
-        self.electra.init_weights()
+        self.init_weights()
 
     def forward(
             self,
@@ -24,19 +24,12 @@ class ElectraForSequenceClassification(nn.Module):
             inputs_embeds=None,
             labels=None,
     ):
-        outputs = self.electra(
-            input_ids,
-            attention_mask=attention_mask,
-            token_type_ids=token_type_ids,
-            position_ids=position_ids,
-            head_mask=head_mask,
-            inputs_embeds=inputs_embeds,
+        discriminator_hidden_states = self.electra(
+            input_ids, attention_mask, token_type_ids, position_ids, head_mask, inputs_embeds
         )
-
-        pooled_output = outputs[1]
+        pooled_output = discriminator_hidden_states[0][:, 0]
 
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)
 
         return logits
-

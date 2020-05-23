@@ -117,10 +117,7 @@ def run_main(args):
     pretrained_model_path = args.model
 
     tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path)
-    if args.model_family == 'electra':
-        model = model_map[args.model_family](model_name=args.model, num_labels=args.num_labels)
-    else:
-        model = model_map[args.model_family].from_pretrained(pretrained_model_path, num_labels=args.num_labels)
+    model = model_map[args.model_family].from_pretrained(pretrained_model_path, num_labels=args.num_labels)
 
     # hacky fix for error in transformers code
     # that triggers error "Assertion srcIndex < srcSelectDimSize failed"
