@@ -7,7 +7,8 @@ from transformers import AdamW, get_linear_schedule_with_warmup, \
     BertForSequenceClassification, BertTokenizer,\
     XLNetForSequenceClassification, XLNetTokenizer,\
     RobertaForSequenceClassification, RobertaTokenizer,\
-    AlbertForSequenceClassification, AlbertTokenizer
+    AlbertForSequenceClassification, AlbertTokenizer, \
+    ElectraTokenizer
 
 from common.constants import *
 from common.evaluators.bert_evaluator import BertEvaluator
@@ -22,6 +23,7 @@ from datasets.bert_processors.sogou_processor import SogouProcessor
 from datasets.bert_processors.sst_processor import SST2Processor
 from datasets.bert_processors.yelp2014_processor import Yelp2014Processor
 from models.bert.args import get_args
+from models.bert.model import ElectraForSequenceClassification
 
     
 def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
@@ -69,6 +71,7 @@ def run_main(args):
 
     model_map = {
         'bert': BertForSequenceClassification,
+        'electra': ElectraForSequenceClassification,
         'xlnet': XLNetForSequenceClassification,
         'roberta': RobertaForSequenceClassification,
         'albert': AlbertForSequenceClassification
@@ -76,6 +79,7 @@ def run_main(args):
 
     tokenizer_map = {
         'bert': BertTokenizer,
+        'electra': ElectraTokenizer,
         'xlnet': XLNetTokenizer,
         'roberta': RobertaTokenizer,
         'albert': AlbertTokenizer
@@ -113,7 +117,10 @@ def run_main(args):
     pretrained_model_path = args.model
 
     tokenizer = tokenizer_map[args.model_family].from_pretrained(pretrained_vocab_path)
-    model = model_map[args.model_family].from_pretrained(pretrained_model_path, num_labels=args.num_labels)
+    if args.model_family == 'electra':
+        model = model_map[args.model_family](model_name=args.model, num_labels=args.num_labels)
+    else:
+        model = model_map[args.model_family].from_pretrained(pretrained_model_path, num_labels=args.num_labels)
 
     # hacky fix for error in transformers code
     # that triggers error "Assertion srcIndex < srcSelectDimSize failed"

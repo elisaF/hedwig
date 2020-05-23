@@ -7,7 +7,8 @@ def get_args():
     parser = models.args.get_args()
 
     parser.add_argument('--model', default=None, type=str, required=True)
-    parser.add_argument('--model-family', type=str, default='bert', choices=['bert', 'xlnet', 'roberta', 'albert'])
+    parser.add_argument('--model-family', type=str, default='bert', choices=['bert', 'electra', 'xlnet',
+                                                                             'roberta', 'albert'])
     parser.add_argument('--dataset', type=str, default='SST-2', choices=['SST-2', 'AGNews', 'Reuters',
                                                                          'CongressionalHearing',
                                                                          'CongressionalHearingBinary', 'AAPD', 'IMDB',
