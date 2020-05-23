@@ -3,12 +3,14 @@ import json
 
 import numpy as np
 import torch
-from transformers import AdamW, get_linear_schedule_with_warmup, \
-    BertForSequenceClassification, BertTokenizer,\
-    XLNetForSequenceClassification, XLNetTokenizer,\
-    RobertaForSequenceClassification, RobertaTokenizer,\
-    AlbertForSequenceClassification, AlbertTokenizer, \
-    ElectraTokenizer
+from transformers import  {
+    AdamW, get_linear_schedule_with_warmup,
+    BertForSequenceClassification, BertTokenizer,
+    XLNetForSequenceClassification, XLNetTokenizer,
+    RobertaForSequenceClassification, RobertaTokenizer
+    AlbertForSequenceClassification, AlbertTokenizer,
+    ElectraForSequenceClassification, ElectraTokenizer
+}
 
 from common.constants import *
 from common.evaluators.bert_evaluator import BertEvaluator
@@ -23,7 +25,6 @@ from datasets.bert_processors.sogou_processor import SogouProcessor
 from datasets.bert_processors.sst_processor import SST2Processor
 from datasets.bert_processors.yelp2014_processor import Yelp2014Processor
 from models.bert.args import get_args
-from models.bert.model import ElectraForSequenceClassification
 
     
 def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
