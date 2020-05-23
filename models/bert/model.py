@@ -24,7 +24,7 @@ class ElectraForSequenceClassification(nn.Module):
             inputs_embeds=None,
             labels=None,
     ):
-        outputs = self.bert(
+        outputs = self.electra(
             input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
