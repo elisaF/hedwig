@@ -3,14 +3,14 @@ import json
 
 import numpy as np
 import torch
-from transformers import  {
+from transformers import (
     AdamW, get_linear_schedule_with_warmup,
     BertForSequenceClassification, BertTokenizer,
     XLNetForSequenceClassification, XLNetTokenizer,
-    RobertaForSequenceClassification, RobertaTokenizer
+    RobertaForSequenceClassification, RobertaTokenizer,
     AlbertForSequenceClassification, AlbertTokenizer,
     ElectraForSequenceClassification, ElectraTokenizer
-}
+)
 
 from common.constants import *
 from common.evaluators.bert_evaluator import BertEvaluator
