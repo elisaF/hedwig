@@ -1,5 +1,5 @@
 from models.reg_lstm.__main__ import run_main
-from models.reg_lstm import get_args
+from models.reg_lstm.args import get_args
 from utils.postprocessing import process_json_results
 
 if __name__ == '__main__':
