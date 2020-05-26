@@ -61,9 +61,7 @@ def evaluate_dataset(split_name, dataset_cls, model, embedding, loader, batch_si
         f.write(json.dumps(scores_dict))
 
 
-if __name__ == '__main__':
-    # Set default configuration in args.py
-    args = get_args()
+def run_main(args):
     print('Args: ', args)
     logger = get_logger()
 
@@ -100,18 +98,18 @@ if __name__ == '__main__':
         dataset_class = dataset_map[args.dataset]
         if args.evaluate_dev:
             train_iter, dev_iter = dataset_class.iters_dev(args.data_dir,
-                                                                  args.word_vectors_file,
-                                                                  args.word_vectors_dir,
-                                                                  batch_size=args.batch_size,
-                                                                  device=device,
-                                                                  unk_init=UnknownWordVecCache.unk)
+                                                           args.word_vectors_file,
+                                                           args.word_vectors_dir,
+                                                           batch_size=args.batch_size,
+                                                           device=device,
+                                                           unk_init=UnknownWordVecCache.unk)
         if args.evaluate_test:
             train_iter, test_iter = dataset_class.iters_test(args.data_dir,
-                                                              args.word_vectors_file,
-                                                              args.word_vectors_dir,
-                                                              batch_size=args.batch_size,
-                                                              device=device,
-                                                              unk_init=UnknownWordVecCache.unk)
+                                                             args.word_vectors_file,
+                                                             args.word_vectors_dir,
+                                                             batch_size=args.batch_size,
+                                                             device=device,
+                                                             unk_init=UnknownWordVecCache.unk)
 
     config = deepcopy(args)
     config.dataset = train_iter.dataset
@@ -151,7 +149,7 @@ if __name__ == '__main__':
         dev_evaluator = EvaluatorFactory.get_evaluator(dataset_class, model, None, dev_iter, args.batch_size, device)
         if hasattr(dev_evaluator, 'is_multilabel'):
             dev_evaluator.is_multilabel = dataset_class.IS_MULTILABEL
-            
+
     if hasattr(train_evaluator, 'is_multilabel'):
         train_evaluator.is_multilabel = dataset_class.IS_MULTILABEL
 
@@ -166,10 +164,12 @@ if __name__ == '__main__':
     }
 
     if args.evaluate_dev:
-        trainer = TrainerFactory.get_trainer_dev(args.dataset, model, None, train_iter, trainer_config, train_evaluator, dev_evaluator)
+        trainer = TrainerFactory.get_trainer_dev(args.dataset, model, None, train_iter, trainer_config, train_evaluator,
+                                                 dev_evaluator)
 
     if args.evaluate_test:
-        trainer = TrainerFactory.get_trainer_test(args.dataset, model, None, train_iter, trainer_config, train_evaluator, test_evaluator)
+        trainer = TrainerFactory.get_trainer_test(args.dataset, model, None, train_iter, trainer_config,
+                                                  train_evaluator, test_evaluator)
 
     if not args.trained_model:
         trainer.train(args.epochs)
@@ -197,3 +197,9 @@ if __name__ == '__main__':
 
     if model.beta_ema > 0:
         model.load_params(old_params)
+
+
+if __name__ == '__main__':
+    # Set default configuration in args.py
+    args = get_args()
+    run_main(args)

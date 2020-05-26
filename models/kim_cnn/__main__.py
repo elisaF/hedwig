@@ -62,9 +62,7 @@ def evaluate_dataset(split_name, dataset_cls, model, embedding, loader, batch_si
         f.write(json.dumps(scores_dict))
 
 
-if __name__ == '__main__':
-    # Set default configuration in args.py
-    args = get_args()
+def run_main(args):
     print('Args: ', args)
 
     metrics_dev_json = args.metrics_json + '_dev'
@@ -189,3 +187,9 @@ if __name__ == '__main__':
         evaluate_dataset('test', dataset_map[args.dataset], model, None, test_iter, args.batch_size,
                          is_multilabel=dataset_class.IS_MULTILABEL,
                          device=device, save_file=metrics_test_json)
+
+
+if __name__ == '__main__':
+    # Set default configuration in args.py
+    args = get_args()
+    run_main(args)

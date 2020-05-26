@@ -37,9 +37,7 @@ def evaluate_split(model, vectorizer, processor, args, save_file, split='dev'):
         f.write(json.dumps(scores_dict))
 
 
-if __name__ == '__main__':
-    # Set default configuration in args.py
-    args = get_args()
+def run_main(args):
     print('Args: ', args)
     n_gpu = torch.cuda.device_count()
     device = torch.device("cuda" if torch.cuda.is_available() and args.cuda else "cpu")
@@ -106,3 +104,9 @@ if __name__ == '__main__':
         evaluate_split(model, vectorizer, processor, args, metrics_dev_json, split='dev')
     if args.evaluate_test:
         evaluate_split(model, vectorizer, processor, args, metrics_test_json, split='test')
+
+
+if __name__ == '__main__':
+    # Set default configuration in args.py
+    args = get_args()
+    run_main(args)

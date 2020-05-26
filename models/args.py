@@ -18,6 +18,6 @@ def get_args():
     parser.add_argument('--evaluate-test', action='store_true')
     parser.add_argument('--evaluate-dev', action='store_true')
     parser.add_argument('--binary-label', default='answer')
-    parser.add_argument('--num-folds', type=int, default=5)
+    parser.add_argument('--num-folds', type=int, default=4)
     parser.add_argument('--fold-num', type=int, default=-1)
     return parser

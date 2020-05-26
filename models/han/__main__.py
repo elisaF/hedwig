@@ -64,9 +64,7 @@ def evaluate_dataset(split_name, dataset_cls, model, embedding, loader, batch_si
         f.write(json.dumps(scores_dict))
 
 
-if __name__ == '__main__':
-    # Set default configuration in args.py
-    args = get_args()
+def run_main(args):
     print('Args: ', args)
     logger = get_logger()
 
@@ -142,7 +140,7 @@ if __name__ == '__main__':
 
     parameter = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = torch.optim.Adam(parameter, lr=args.lr, weight_decay=args.weight_decay)
-    
+
     train_evaluator = EvaluatorFactory.get_evaluator(dataset_class, model, None, train_iter, args.batch_size, device)
     if args.evaluate_dev:
         dev_evaluator = EvaluatorFactory.get_evaluator(dataset_class, model, None, dev_iter, args.batch_size, device)
@@ -173,9 +171,11 @@ if __name__ == '__main__':
         'ignore_lengths': True
     }
     if args.evaluate_dev:
-        trainer = TrainerFactory.get_trainer_dev(args.dataset, model, None, train_iter, trainer_config, train_evaluator, dev_evaluator)
+        trainer = TrainerFactory.get_trainer_dev(args.dataset, model, None, train_iter, trainer_config, train_evaluator,
+                                                 dev_evaluator)
     if args.evaluate_test:
-        trainer = TrainerFactory.get_trainer_test(args.dataset, model, None, train_iter, trainer_config, train_evaluator,
+        trainer = TrainerFactory.get_trainer_test(args.dataset, model, None, train_iter, trainer_config,
+                                                  train_evaluator,
                                                   test_evaluator)
 
     if not args.trained_model:
@@ -198,3 +198,10 @@ if __name__ == '__main__':
         evaluate_dataset('test', dataset_map[args.dataset], model, None, test_iter, args.batch_size,
                          is_multilabel=dataset_class.IS_MULTILABEL,
                          device=device, save_file=metrics_test_json)
+
+        
+if __name__ == '__main__':
+    # Set default configuration in args.py
+    args = get_args()
+    run_main(args)
+
