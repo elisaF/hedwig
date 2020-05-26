@@ -24,5 +24,7 @@ class CongressionalHearingProcessor(BagOfWordsProcessor):
     def _create_examples(self, lines):
         examples = []
         for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
             examples.append(InputExample(guid=line[0], text=line[2], label=line[1]))
         return examples
