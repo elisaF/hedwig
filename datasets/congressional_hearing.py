@@ -37,6 +37,7 @@ def process_docids(string):
 
 
 class CongressionalHearing(TabularDataset):
+    NAME = 'CongressionalHearing'
     NUM_CLASSES = 6
     IS_MULTILABEL = True
 
@@ -49,12 +50,12 @@ class CongressionalHearing(TabularDataset):
         return len(ex.text)
 
     @classmethod
-    def splits(cls, path, train_file='train.tsv',
+    def splits(cls, path, data_path, train_file='train.tsv',
                validation_file='dev.tsv',
                test_file='test.tsv', **kwargs):
-        train = os.path.join(path, train_file)
-        validation = os.path.join(path, validation_file)
-        test = os.path.join(path, test_file)
+        train = os.path.join(data_path, train_file)
+        validation = os.path.join(data_path, validation_file)
+        test = os.path.join(data_path, test_file)
         return super(CongressionalHearing, cls).splits(
             path, train=train, validation=validation, test=test,
             format='tsv', fields=[('docid', cls.DOCID_FIELD), ('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)],
@@ -62,7 +63,7 @@ class CongressionalHearing(TabularDataset):
         )
 
     @classmethod
-    def iters(cls, path, vectors_name, vectors_cache, batch_size=64, shuffle=True, device=0, vectors=None,
+    def iters(cls, path, data_path, vectors_name, vectors_cache, batch_size=64, shuffle=True, device=0, vectors=None,
               unk_init=torch.Tensor.zero_):
         """
         :param path: directory containing train, test, dev files
@@ -77,23 +78,23 @@ class CongressionalHearing(TabularDataset):
         if vectors is None:
             vectors = Vectors(name=vectors_name, cache=vectors_cache, unk_init=unk_init)
 
-        train, val, test = cls.splits(path)
+        train, val, test = cls.splits(path, data_path)
         cls.TEXT_FIELD.build_vocab(train, val, test, vectors=vectors)
         return BucketIterator.splits((train, val, test), batch_size=batch_size, repeat=False, shuffle=shuffle,
                                      sort_within_batch=True, device=device)
 
     @classmethod
-    def splits_dev(cls, path, train_file='train.tsv',
+    def splits_dev(cls, path, data_path, train_file='train.tsv',
                    validation_file='dev.tsv', **kwargs):
-        train = os.path.join(path, train_file)
-        validation = os.path.join(path, validation_file)
+        train = os.path.join(data_path, train_file)
+        validation = os.path.join(data_path, validation_file)
         return super(CongressionalHearing, cls).splits(
             path, train=train, validation=validation, format='tsv', fields=[('docid', cls.DOCID_FIELD), ('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)],
             skip_header=True
         )
 
     @classmethod
-    def iters_dev(cls, path, vectors_name, vectors_cache, batch_size=64, shuffle=True, device=0, vectors=None,
+    def iters_dev(cls, path, data_path, vectors_name, vectors_cache, batch_size=64, shuffle=True, device=0, vectors=None,
               unk_init=torch.Tensor.zero_):
         """
         :param path: directory containing train, test, dev files
@@ -108,23 +109,23 @@ class CongressionalHearing(TabularDataset):
         if vectors is None:
             vectors = Vectors(name=vectors_name, cache=vectors_cache, unk_init=unk_init)
 
-        train, val = cls.splits_dev(path)
+        train, val = cls.splits_dev(path, data_path)
         cls.TEXT_FIELD.build_vocab(train, val, vectors=vectors)
         return BucketIterator.splits((train, val), batch_size=batch_size, repeat=False, shuffle=shuffle,
                                      sort_within_batch=True, device=device)
 
     @classmethod
-    def splits_test(cls, path, train_file='train.tsv',
+    def splits_test(cls, path, data_path, train_file='train.tsv',
                     test_file='test.tsv', **kwargs):
-        train = os.path.join(path, train_file)
-        test = os.path.join(path, test_file)
+        train = os.path.join(data_path, train_file)
+        test = os.path.join(data_path, test_file)
         return super(CongressionalHearing, cls).splits(
             path, train=train, test=test, format='tsv', fields=[('docid', cls.DOCID_FIELD), ('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)],
             skip_header=True
         )
 
     @classmethod
-    def iters_test(cls, path, vectors_name, vectors_cache, batch_size=64, shuffle=True, device=0, vectors=None,
+    def iters_test(cls, path, data_path, vectors_name, vectors_cache, batch_size=64, shuffle=True, device=0, vectors=None,
               unk_init=torch.Tensor.zero_):
         """
         :param path: directory containing train, test, dev files
@@ -139,7 +140,7 @@ class CongressionalHearing(TabularDataset):
         if vectors is None:
             vectors = Vectors(name=vectors_name, cache=vectors_cache, unk_init=unk_init)
 
-        train, test = cls.splits_test(path)
+        train, test = cls.splits_test(path, data_path)
         cls.TEXT_FIELD.build_vocab(train, test, vectors=vectors)
         return BucketIterator.splits((train, test), batch_size=batch_size, repeat=False, shuffle=shuffle,
                                      sort_within_batch=True, device=device)
