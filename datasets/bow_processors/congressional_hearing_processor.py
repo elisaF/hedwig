@@ -10,7 +10,7 @@ class CongressionalHearingProcessor(BagOfWordsProcessor):
 
     def __init__(self, config=None):
         super().__init__()
-        if config.fold_num >= 0:
+        if config and config.fold_num >= 0:
             self.NAME = os.path.join('CongressionalHearingFolds', 'fold'+str(config.fold_num))
         else:
             self.NAME = 'CongressionalHearing'

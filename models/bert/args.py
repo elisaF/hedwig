@@ -19,7 +19,7 @@ def get_args():
     parser.add_argument('--fp16', action='store_true', help='use 16-bit floating point precision')
 
     parser.add_argument('--max-seq-length',
-                        default=128,
+                        default=512,
                         type=int,
                         help='The maximum total input sequence length after WordPiece tokenization. \n'
                              'Sequences longer than this will be truncated, and sequences shorter \n'

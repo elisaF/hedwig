@@ -20,5 +20,3 @@ if __name__ == '__main__':
     process_json_results(orig_metrics_json, orig_metrics_json + '_fine_summary.tsv', 'test', label_suffix='_fine')
     process_json_results(orig_metrics_json, orig_metrics_json + '_coarse_summary.tsv', 'test', label_suffix='_coarse')
 
-
-

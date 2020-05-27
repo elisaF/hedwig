@@ -73,14 +73,14 @@ def run_main(args):
     args.vocab_size = min(args.max_vocab_size, dataset_map[args.dataset].VOCAB_SIZE)
 
     train_examples = None
-    processor = dataset_map[args.dataset]()
+    processor = dataset_map[args.dataset](args)
     vectorizer = TfidfVectorizer(stop_words=stopwords.words("english"),
                                  # max_features=args.max_vocab_size,
                                  tokenizer=word_tokenize)
 
     if not args.trained_model:
         train_examples = processor.get_train_examples(args.data_dir)
-        save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
+        save_path = os.path.join(args.save_path, processor.NAME)
         os.makedirs(save_path, exist_ok=True)
 
     model = LogisticRegression(args)
