@@ -47,6 +47,7 @@ def evaluate_dataset(split_name, dataset_cls, model, embedding, loader, batch_si
     with open(save_file, 'w') as f:
         f.write(json.dumps(scores_dict))
 
+
 def run_main(args):
     print('Args: ', args)
 
@@ -66,7 +67,6 @@ def run_main(args):
     if torch.cuda.is_available() and args.cuda:
         print('Note: You are using GPU for training')
         torch.cuda.manual_seed(args.seed)
-        args.gpu = torch.device('cuda:%d' % args.gpu)
 
     if torch.cuda.is_available() and not args.cuda:
         print('Warning: Using CPU for training')
@@ -115,7 +115,7 @@ def run_main(args):
 
     if args.resume_snapshot:
         if args.cuda:
-            model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage.cuda(args.gpu))
+                model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage.cuda(args.gpu))
         else:
             model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage)
     else:
