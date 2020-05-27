@@ -67,7 +67,6 @@ class BagOfWordsTrainer(object):
 
         for epoch in trange(int(self.args.epochs), desc="Epoch"):
             self.train_epoch(train_dataloader)
-            print('Train loss: ', self.tr_loss)
             if self.args.evaluate_dev:
                 dev_evaluator = BagOfWordsEvaluator(self.model, self.vectorizer, self.processor, self.args, split='dev')
                 dev_precision, dev_recall, dev_f1, dev_acc, dev_loss = dev_evaluator.get_scores()[0][:5]
