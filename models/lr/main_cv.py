@@ -9,9 +9,10 @@ if __name__ == '__main__':
         raise ValueError("Number of folds must be greater than 1!", args.num_folds)
 
     orig_metrics_json = args.metrics_json
-    for fold in range(0, args.num_folds):
+    for max_vocab_size, fold in zip(args.max_vocab_sizes, range(0, args.num_folds)):
         print('On fold', str(fold))
         args.fold_num = fold
+        args.max_vocab_size = max_vocab_size
         if orig_metrics_json:
             args.metrics_json = orig_metrics_json + '_fold' + str(fold)
         run_main(args)
