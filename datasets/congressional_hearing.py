@@ -125,8 +125,8 @@ class CongressionalHearing(TabularDataset):
         )
 
     @classmethod
-    def iters_test(cls, path, data_path, vectors_name, vectors_cache, batch_size=64, shuffle=True, device=0, vectors=None,
-              unk_init=torch.Tensor.zero_):
+    def iters_test(cls, path, vectors_name, vectors_cache, batch_size=64, shuffle=True, device=0, vectors=None,
+              unk_init=torch.Tensor.zero_, data_path=None):
         """
         :param path: directory containing train, test, dev files
         :param vectors_name: name of word vectors file
