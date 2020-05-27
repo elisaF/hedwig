@@ -37,7 +37,6 @@ def process_docids(string):
 
 
 class CongressionalHearing(TabularDataset):
-    NAME = 'CongressionalHearing'
     NUM_CLASSES = 6
     IS_MULTILABEL = True
 
@@ -50,12 +49,16 @@ class CongressionalHearing(TabularDataset):
         return len(ex.text)
 
     @classmethod
-    def splits(cls, path, train=os.path.join('CongressionalHearing', 'train.tsv'),
-               validation=os.path.join('CongressionalHearing', 'dev.tsv'),
-               test=os.path.join('CongressionalHearing', 'test.tsv'), **kwargs):
+    def splits(cls, path, train_file='train.tsv',
+               validation_file='dev.tsv',
+               test_file='test.tsv', **kwargs):
+        train = os.path.join(path, train_file)
+        validation = os.path.join(path, validation_file)
+        test = os.path.join(path, test_file)
         return super(CongressionalHearing, cls).splits(
             path, train=train, validation=validation, test=test,
-            format='tsv', fields=[('docid', cls.DOCID_FIELD), ('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)]
+            format='tsv', fields=[('docid', cls.DOCID_FIELD), ('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)],
+            skip_header=True
         )
 
     @classmethod
@@ -80,10 +83,13 @@ class CongressionalHearing(TabularDataset):
                                      sort_within_batch=True, device=device)
 
     @classmethod
-    def splits_dev(cls, path, train=os.path.join('CongressionalHearing', 'train.tsv'),
-                   validation=os.path.join('CongressionalHearing', 'dev.tsv'), **kwargs):
+    def splits_dev(cls, path, train_file='train.tsv',
+                   validation_file='dev.tsv', **kwargs):
+        train = os.path.join(path, train_file)
+        validation = os.path.join(path, validation_file)
         return super(CongressionalHearing, cls).splits(
-            path, train=train, validation=validation, format='tsv', fields=[('docid', cls.DOCID_FIELD), ('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)]
+            path, train=train, validation=validation, format='tsv', fields=[('docid', cls.DOCID_FIELD), ('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)],
+            skip_header=True
         )
 
     @classmethod
@@ -108,10 +114,13 @@ class CongressionalHearing(TabularDataset):
                                      sort_within_batch=True, device=device)
 
     @classmethod
-    def splits_test(cls, path, train=os.path.join('CongressionalHearing', 'train.tsv'),
-                   test=os.path.join('CongressionalHearing', 'test.tsv'), **kwargs):
+    def splits_test(cls, path, train_file='train.tsv',
+                    test_file='test.tsv', **kwargs):
+        train = os.path.join(path, train_file)
+        test = os.path.join(path, test_file)
         return super(CongressionalHearing, cls).splits(
-            path, train=train, test=test, format='tsv', fields=[('docid', cls.DOCID_FIELD), ('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)]
+            path, train=train, test=test, format='tsv', fields=[('docid', cls.DOCID_FIELD), ('label', cls.LABEL_FIELD), ('text', cls.TEXT_FIELD)],
+            skip_header=True
         )
 
     @classmethod
