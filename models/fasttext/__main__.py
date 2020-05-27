@@ -67,7 +67,7 @@ def run_main(args):
     if torch.cuda.is_available() and args.cuda:
         print('Note: You are using GPU for training')
         torch.cuda.manual_seed(args.seed)
-        args.gpu = torch.cuda.current_device()
+        args.device = torch.device('cuda:%d' % args.gpu)
 
     if torch.cuda.is_available() and not args.cuda:
         print('Warning: Using CPU for training')
@@ -92,13 +92,13 @@ def run_main(args):
             train_iter, dev_iter = dataset_map[args.dataset].iters_dev(args.data_dir, dataset_name, 
                                                                        args.word_vectors_file,
                                                                        args.word_vectors_dir,
-                                                                       batch_size=args.batch_size, device=args.gpu,
+                                                                       batch_size=args.batch_size, device=args.device,
                                                                        unk_init=UnknownWordVecCache.unk)
         if args.evaluate_test:
             train_iter, test_iter = dataset_map[args.dataset].iters_test(args.data_dir, dataset_name,
                                                                          args.word_vectors_file,
                                                                          args.word_vectors_dir,
-                                                                         batch_size=args.batch_size, device=args.gpu,
+                                                                         batch_size=args.batch_size, device=args.device,
                                                                          unk_init=UnknownWordVecCache.unk)
 
     config = deepcopy(args)
@@ -116,7 +116,7 @@ def run_main(args):
 
     if args.resume_snapshot:
         if args.cuda:
-            model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage.cuda(args.gpu))
+            model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage.cuda(args.device))
         else:
             model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage)
     else:
@@ -130,13 +130,13 @@ def run_main(args):
     parameter = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = torch.optim.Adam(parameter, lr=args.lr, weight_decay=args.weight_decay)
 
-    train_evaluator = EvaluatorFactory.get_evaluator(dataset_map[args.dataset], model, None, train_iter, args.batch_size, args.gpu)
+    train_evaluator = EvaluatorFactory.get_evaluator(dataset_map[args.dataset], model, None, train_iter, args.batch_size, args.device)
     if args.evaluate_dev:
-        dev_evaluator = EvaluatorFactory.get_evaluator(dataset_map[args.dataset], model, None, dev_iter, args.batch_size, args.gpu)
+        dev_evaluator = EvaluatorFactory.get_evaluator(dataset_map[args.dataset], model, None, dev_iter, args.batch_size, args.device)
         if hasattr(dev_evaluator, 'is_multilabel'):
             dev_evaluator.is_multilabel = dataset_class.IS_MULTILABEL
     if args.evaluate_test:
-        test_evaluator = EvaluatorFactory.get_evaluator(dataset_map[args.dataset], model, None, test_iter, args.batch_size, args.gpu)
+        test_evaluator = EvaluatorFactory.get_evaluator(dataset_map[args.dataset], model, None, test_iter, args.batch_size, args.device)
         if hasattr(test_evaluator, 'is_multilabel'):
             test_evaluator.is_multilabel = dataset_class.IS_MULTILABEL
     if hasattr(train_evaluator, 'is_multilabel'):
@@ -161,7 +161,7 @@ def run_main(args):
         trainer.train(args.epochs)
     else:
         if args.cuda:
-            model = torch.load(args.trained_model, map_location=lambda storage, location: storage.cuda(args.gpu))
+            model = torch.load(args.trained_model, map_location=lambda storage, location: storage.cuda(args.device))
         else:
             model = torch.load(args.trained_model, map_location=lambda storage, location: storage)
 
@@ -172,11 +172,11 @@ def run_main(args):
     if args.evaluate_dev:
         evaluate_dataset('dev', dataset_map[args.dataset], model, None, dev_iter, args.batch_size,
                          is_multilabel=dataset_class.IS_MULTILABEL,
-                         device=args.gpu, save_file=metrics_dev_json)
+                         device=args.device, save_file=metrics_dev_json)
     if args.evaluate_test:
         evaluate_dataset('test', dataset_map[args.dataset], model, None, test_iter, args.batch_size,
                          is_multilabel=dataset_class.IS_MULTILABEL,
-                         device=args.gpu, save_file=metrics_test_json)
+                         device=args.device, save_file=metrics_test_json)
 
 
 if __name__ == '__main__':
