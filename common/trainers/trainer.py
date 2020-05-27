@@ -4,7 +4,7 @@ class Trainer(object):
     Abstraction for training a model on a Dataset.
     """
 
-    def __init__(self, model, embedding, train_loader, trainer_config, train_evaluator, test_evaluator=None, dev_evaluator=None):
+    def __init__(self, model, embedding, train_loader, trainer_config, train_evaluator, test_evaluator=None, dev_evaluator=None, args=None):
         self.model = model
         self.embedding = embedding
         self.optimizer = trainer_config.get('optimizer')
@@ -21,6 +21,7 @@ class Trainer(object):
         self.train_evaluator = train_evaluator
         self.test_evaluator = test_evaluator
         self.dev_evaluator = dev_evaluator
+        self.args = args
 
     def evaluate(self, evaluator, dataset_name):
         scores, metric_names = evaluator.get_scores()

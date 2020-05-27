@@ -27,6 +27,7 @@ class ClassificationTrainer(Trainer):
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.snapshot_path = os.path.join(self.model_outfile, self.train_loader.dataset.NAME, '%s.pt' % timestamp)
+        self.args = args
 
     def train_epoch(self, epoch):
         self.train_loader.init_epoch()
