@@ -10,7 +10,6 @@ def get_args():
     parser.add_argument('--max-vocab-size', type=int, default=500000)
     parser.add_argument('--max-vocab-sizes', nargs='+', type=int,  
                         help='Vocab sizes for each fold when doing cross-validation')
-    parser.add_argument('--max-vocab-sizes', type=list)
     parser.add_argument('--dropout', type=float, default=0)
     parser.add_argument('--epoch-decay', type=int, default=15)
     parser.add_argument('--weight-decay', type=float, default=0)
