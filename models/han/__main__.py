@@ -98,8 +98,13 @@ def run_main(args):
 
     else:
         dataset_class = dataset_map[args.dataset]
+        if args.fold_num >= 0:
+            dataset_name = os.path.join(dataset_class.NAME + 'Folds', 'fold' + str(args.fold_num))
+        else:
+            dataset_name = dataset_class.NAME
         if args.evaluate_dev:
             train_iter, dev_iter = dataset_class.iters_dev(args.data_dir,
+                                                           dataset_name,
                                                            args.word_vectors_file,
                                                            args.word_vectors_dir,
                                                            batch_size=args.batch_size,
@@ -107,6 +112,7 @@ def run_main(args):
                                                            unk_init=UnknownWordVecCache.unk)
         if args.evaluate_test:
             train_iter, test_iter = dataset_class.iters_test(args.data_dir,
+                                                             dataset_name,
                                                              args.word_vectors_file,
                                                              args.word_vectors_dir,
                                                              batch_size=args.batch_size,
@@ -135,7 +141,7 @@ def run_main(args):
         model.to(device)
 
     if not args.trained_model:
-        save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
+        save_path = os.path.join(args.save_path, dataset_name)
         os.makedirs(save_path, exist_ok=True)
 
     parameter = filter(lambda p: p.requires_grad, model.parameters())

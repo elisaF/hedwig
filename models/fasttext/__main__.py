@@ -83,17 +83,22 @@ def run_main(args):
         raise ValueError('Unrecognized dataset')
     else:
         dataset_class = dataset_map[args.dataset]
+        if args.fold_num >= 0:
+            dataset_name = os.path.join(dataset_class.NAME + 'Folds', 'fold' + str(args.fold_num))
+        else:
+            dataset_name = dataset_class.NAME
         if args.evaluate_dev:
-            train_iter, dev_iter = dataset_map[args.dataset].iters_dev(args.data_dir, args.word_vectors_file,
-                                                                              args.word_vectors_dir,
-                                                                              batch_size=args.batch_size,
-                                                                              device=args.gpu,
-                                                                              unk_init=UnknownWordVecCache.unk)
+            train_iter, dev_iter = dataset_map[args.dataset].iters_dev(args.data_dir, dataset_name, 
+                                                                       args.word_vectors_file,
+                                                                       args.word_vectors_dir,
+                                                                       batch_size=args.batch_size, device=args.gpu,
+                                                                       unk_init=UnknownWordVecCache.unk)
         if args.evaluate_test:
-            train_iter, test_iter = dataset_map[args.dataset].iters_test(args.data_dir, args.word_vectors_file,
-                                                                          args.word_vectors_dir,
-                                                                          batch_size=args.batch_size, device=args.gpu,
-                                                                          unk_init=UnknownWordVecCache.unk)
+            train_iter, test_iter = dataset_map[args.dataset].iters_test(args.data_dir, dataset_name,
+                                                                         args.word_vectors_file,
+                                                                         args.word_vectors_dir,
+                                                                         batch_size=args.batch_size, device=args.gpu,
+                                                                         unk_init=UnknownWordVecCache.unk)
 
     config = deepcopy(args)
     config.dataset = train_iter.dataset
@@ -118,7 +123,7 @@ def run_main(args):
         model.to(device)
 
     if not args.trained_model:
-        save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
+        save_path = os.path.join(args.save_path, dataset_name)
         os.makedirs(save_path, exist_ok=True)
 
     parameter = filter(lambda p: p.requires_grad, model.parameters())
@@ -145,10 +150,11 @@ def run_main(args):
         'is_multilabel': dataset_class.IS_MULTILABEL
     }
     if args.evaluate_dev:
-        trainer = TrainerFactory.get_trainer_dev(args.dataset, model, None, train_iter, trainer_config, train_evaluator, dev_evaluator)
+        trainer = TrainerFactory.get_trainer_dev(args.dataset, model, None, train_iter, trainer_config, train_evaluator,
+                                                 dev_evaluator, args)
     if args.evaluate_test:
         trainer = TrainerFactory.get_trainer_test(args.dataset, model, None, train_iter, trainer_config, train_evaluator,
-                                             test_evaluator)
+                                             test_evaluator, args)
 
     if not args.trained_model:
         trainer.train(args.epochs)

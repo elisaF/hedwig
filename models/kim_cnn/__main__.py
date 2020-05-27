@@ -96,19 +96,19 @@ def run_main(args):
     else:
         dataset_class = dataset_map[args.dataset]
         if args.fold_num >= 0:
-            path_dir = os.path.join(dataset_class.NAME + 'Folds', 'fold' + str(args.fold_num))
+            dataset_name = os.path.join(dataset_class.NAME + 'Folds', 'fold' + str(args.fold_num))
         else:
-            path_dir = dataset_class.NAME
+            dataset_name = dataset_class.NAME
         if args.evaluate_dev:
             train_iter, dev_iter = dataset_map[args.dataset].iters_dev(args.data_dir,
-                                                                       data_path=path_dir,
+                                                                       dataset_name,
                                                                        vectors_name=args.word_vectors_file,
                                                                        vectors_cache=args.word_vectors_dir,
                                                                        batch_size=args.batch_size, device=device,
                                                                        unk_init=UnknownWordVecCache.unk)
         if args.evaluate_test:
                 train_iter, test_iter = dataset_map[args.dataset].iters_test(args.data_dir,
-                                                                             data_path=path_dir,
+                                                                             dataset_name,
                                                                              vectors_name=args.word_vectors_file,
                                                                              vectors_cache=args.word_vectors_dir,
                                                                              batch_size=args.batch_size,
@@ -138,7 +138,7 @@ def run_main(args):
         model.to(device)
 
     if not args.trained_model:
-        save_path = os.path.join(args.save_path, dataset_map[args.dataset].NAME)
+        save_path = os.path.join(args.save_path, dataset_name)
         os.makedirs(save_path, exist_ok=True)
 
     parameter = filter(lambda p: p.requires_grad, model.parameters())
@@ -170,10 +170,10 @@ def run_main(args):
     }
     if args.evaluate_dev:
         trainer = TrainerFactory.get_trainer_dev(args.dataset, model, None, train_iter, trainer_config, train_evaluator,
-                                                 dev_evaluator)
+                                                 dev_evaluator, args)
     if args.evaluate_test:
         trainer = TrainerFactory.get_trainer_test(args.dataset, model, None, train_iter, trainer_config, train_evaluator,
-                                                  test_evaluator)
+                                                  test_evaluator, args)
 
     if not args.trained_model:
         trainer.train(args.epochs)
