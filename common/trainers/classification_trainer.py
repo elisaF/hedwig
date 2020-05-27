@@ -11,7 +11,8 @@ from common.trainers.trainer import Trainer
 
 class ClassificationTrainer(Trainer):
 
-    def __init__(self, model, embedding, train_loader, trainer_config, train_evaluator, test_evaluator=None, dev_evaluator=None):
+    def __init__(self, model, embedding, train_loader, trainer_config, train_evaluator, test_evaluator=None,
+                 dev_evaluator=None, args=None):
         super().__init__(model, embedding, train_loader, trainer_config, train_evaluator, test_evaluator, dev_evaluator)
         self.config = trainer_config
         self.early_stop = False
@@ -88,22 +89,27 @@ class ClassificationTrainer(Trainer):
             print('\n' + header)
             self.train_epoch(epoch)
 
-            # Evaluate performance on validation set
-            dev_precision, dev_recall, dev_f1, dev_acc, dev_loss = self.dev_evaluator.get_scores()[0][:5]
+            if self.args.evaluate_dev:
+                # Evaluate performance on validation set
+                dev_precision, dev_recall, dev_f1, dev_acc, dev_loss = self.dev_evaluator.get_scores()[0][:5]
 
-            # Print validation results
-            print('\n' + dev_header)
-            print(self.dev_log_template.format(time.time() - self.start, epoch, self.iterations, epoch, epochs,
-                                               dev_acc, dev_precision, dev_recall, dev_f1, dev_loss))
+                # Print validation results
+                print('\n' + dev_header)
+                print(self.dev_log_template.format(time.time() - self.start, epoch, self.iterations, epoch, epochs,
+                                                   dev_acc, dev_precision, dev_recall, dev_f1, dev_loss))
 
-            # Update validation results
-            if dev_f1 > self.best_dev_f1:
-                self.iters_not_improved = 0
-                self.best_dev_f1 = dev_f1
-                torch.save(self.model, self.snapshot_path)
-            else:
-                self.iters_not_improved += 1
-                if self.iters_not_improved >= self.patience:
-                    self.early_stop = True
-                    print("Early Stopping. Epoch: {}, Best Dev F1: {}".format(epoch, self.best_dev_f1))
-                    break
+                # Update validation results
+                if dev_f1 > self.best_dev_f1:
+                    self.iters_not_improved = 0
+                    self.best_dev_f1 = dev_f1
+                    torch.save(self.model, self.snapshot_path)
+                else:
+                    self.iters_not_improved += 1
+                    if self.iters_not_improved >= self.patience:
+                        self.early_stop = True
+                        print("Early Stopping. Epoch: {}, Best Dev F1: {}".format(epoch, self.best_dev_f1))
+                        break
+        # save model at end of training
+        # when evaluating on test
+        if self.args.evaluate_test:
+            torch.save(self.model, self.snapshot_path)
