@@ -178,11 +178,11 @@ def run_main(args):
     }
     if args.evaluate_dev:
         trainer = TrainerFactory.get_trainer_dev(args.dataset, model, None, train_iter, trainer_config, train_evaluator,
-                                                 dev_evaluator)
+                                                 dev_evaluator, args)
     if args.evaluate_test:
         trainer = TrainerFactory.get_trainer_test(args.dataset, model, None, train_iter, trainer_config,
                                                   train_evaluator,
-                                                  test_evaluator)
+                                                  test_evaluator, args)
 
     if not args.trained_model:
         trainer.train(args.epochs)
