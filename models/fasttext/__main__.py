@@ -67,6 +67,7 @@ def run_main(args):
     if torch.cuda.is_available() and args.cuda:
         print('Note: You are using GPU for training')
         torch.cuda.manual_seed(args.seed)
+        args.gpu = torch.cuda.current_device()
 
     if torch.cuda.is_available() and not args.cuda:
         print('Warning: Using CPU for training')
@@ -115,7 +116,7 @@ def run_main(args):
 
     if args.resume_snapshot:
         if args.cuda:
-                model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage.cuda(args.gpu))
+            model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage.cuda(args.gpu))
         else:
             model = torch.load(args.resume_snapshot, map_location=lambda storage, location: storage)
     else:
