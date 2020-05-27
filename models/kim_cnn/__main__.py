@@ -101,19 +101,19 @@ def run_main(args):
             path_dir = dataset_class.NAME
         if args.evaluate_dev:
             train_iter, dev_iter = dataset_map[args.dataset].iters_dev(args.data_dir,
+                                                                       data_path=path_dir,
                                                                        vectors_name=args.word_vectors_file,
                                                                        vectors_cache=args.word_vectors_dir,
                                                                        batch_size=args.batch_size, device=device,
-                                                                       unk_init=UnknownWordVecCache.unk,
-                                                                       data_path=path_dir,)
+                                                                       unk_init=UnknownWordVecCache.unk)
         if args.evaluate_test:
                 train_iter, test_iter = dataset_map[args.dataset].iters_test(args.data_dir,
+                                                                             data_path=path_dir,
                                                                              vectors_name=args.word_vectors_file,
                                                                              vectors_cache=args.word_vectors_dir,
                                                                              batch_size=args.batch_size,
                                                                              device=device,
-                                                                             unk_init=UnknownWordVecCache.unk,
-                                                                             data_path=path_dir,)
+                                                                             unk_init=UnknownWordVecCache.unk)
 
     config = deepcopy(args)
     config.dataset = train_iter.dataset

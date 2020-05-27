@@ -96,8 +96,13 @@ def run_main(args):
 
     else:
         dataset_class = dataset_map[args.dataset]
+        if args.fold_num >= 0:
+            path_dir = os.path.join(dataset_class.NAME + 'Folds', 'fold' + str(args.fold_num))
+        else:
+            path_dir = dataset_class.NAME
         if args.evaluate_dev:
             train_iter, dev_iter = dataset_class.iters_dev(args.data_dir,
+                                                           path_dir,
                                                            args.word_vectors_file,
                                                            args.word_vectors_dir,
                                                            batch_size=args.batch_size,
@@ -105,6 +110,7 @@ def run_main(args):
                                                            unk_init=UnknownWordVecCache.unk)
         if args.evaluate_test:
             train_iter, test_iter = dataset_class.iters_test(args.data_dir,
+                                                             path_dir,
                                                              args.word_vectors_file,
                                                              args.word_vectors_dir,
                                                              batch_size=args.batch_size,
