@@ -324,12 +324,13 @@ def _truncate_seq_triplet(tokens_a, tokens_b, tokens_c, max_length):
     removed_tokens_b = []
     removed_tokens_c = []
     while True:
-        total_length = len(tokens_a) + len(tokens_b) +  len(tokens_c)
+        total_length = len(tokens_a) + len(tokens_b) + len(tokens_c)
         if total_length <= max_length:
             break
-        if len(tokens_a) > len(tokens_b) and len(tokens_a) > len(tokens_c):
+        longest_seq = np.array([len(tokens_a), len(tokens_b), len(tokens_c)]).argmax(axis=0)
+        if longest_seq == 0:
             removed_tokens_a.append(tokens_a.pop())
-        elif len(tokens_b) > len(tokens_a) and len(tokens_b) > len(tokens_c):
+        elif longest_seq == 1:
             removed_tokens_b.append(tokens_b.pop())
         else:
             removed_tokens_c.append(tokens_c.pop())
