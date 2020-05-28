@@ -52,5 +52,7 @@ def get_args():
                         help='Loss to use during training for multi-label classification.')
     parser.add_argument('--use-second-input', action='store_true')
     parser.add_argument('--second-input-column', type=int, default=3)
+    parser.add_argument('--use-third-input', action='store_true')
+    parser.add_argument('--third-input-column', type=int, default=12)
     args = parser.parse_args()
     return args

@@ -8,7 +8,7 @@ from nltk.tokenize import sent_tokenize
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
 
-    def __init__(self, guid, text_a, text_b=None, label=None):
+    def __init__(self, guid, text_a, text_b=None, text_c=None, label=None):
         """Constructs a InputExample.
 
         Args:
@@ -23,6 +23,7 @@ class InputExample(object):
         self.guid = guid
         self.text_a = text_a
         self.text_b = text_b
+        self.text_c = text_c
         self.label = label
 
 
@@ -111,18 +112,35 @@ def convert_examples_to_features(examples, max_seq_length, tokenizer, print_exam
         tokens_a = tokenizer.tokenize(example.text_a)
 
         tokens_b = None
+        tokens_c = None
         if example.text_b:
             tokens_b = tokenizer.tokenize(example.text_b)
             # Modifies `tokens_a` and `tokens_b` in place so that the total
             # length is less than the specified length.
             # Account for [CLS], [SEP], [SEP] with "- 3"
-            orig_len_a = len(tokens_a)
-            orig_len_b = len(tokens_b)
-            removed_tokens_a, removed_tokens_b = _truncate_seq_pair(tokens_a, tokens_b, max_seq_length - 3)
-            if removed_tokens_a:
-                print('Truncating example', example.guid, 'from ', orig_len_a + orig_len_b, 'to', (max_seq_length - 3))
-                print('Truncated text a: ', removed_tokens_a)
-                print('Truncated text b: ', removed_tokens_b)
+            if not example.text_c:
+                orig_len_a = len(tokens_a)
+                orig_len_b = len(tokens_b)
+                removed_tokens_a, removed_tokens_b = _truncate_seq_pair(tokens_a, tokens_b, max_seq_length - 3)
+                if removed_tokens_a:
+                    print('Truncating example', example.guid, 'from ', orig_len_a + orig_len_b, 'to', (max_seq_length - 3))
+                    print('Truncated text a: ', removed_tokens_a)
+                    print('Truncated text b: ', removed_tokens_b)
+
+            else:
+                tokens_c = tokenizer.tokenize(example.text_c)
+                # Modifies `tokens_a`, `tokens_b`, `tokens_c` in place so that the total
+                # length is less than the specified length.
+                # Account for [CLS], [SEP], [SEP], [SEP] with "- 4"
+                orig_len_a = len(tokens_a)
+                orig_len_b = len(tokens_b)
+                orig_len_c = len(tokens_c)
+                removed_tokens_a, removed_tokens_b, removed_tokens_c = _truncate_seq_triplet(tokens_a, tokens_b, tokens_c, max_seq_length - 4)
+                if removed_tokens_a:
+                    print('Truncating example', example.guid, 'from ', orig_len_a + orig_len_b + orig_len_c, 'to', (max_seq_length - 4))
+                    print('Truncated text a: ', removed_tokens_a)
+                    print('Truncated text b: ', removed_tokens_b)
+                    print('Truncated text c: ', removed_tokens_c)
         else:
             # Account for [CLS] and [SEP] with "- 2"
             if len(tokens_a) > max_seq_length - 2:
@@ -155,6 +173,10 @@ def convert_examples_to_features(examples, max_seq_length, tokenizer, print_exam
         if tokens_b:
             tokens += tokens_b + [tokenizer.sep_token]
             segment_ids += [1] * (len(tokens_b) + 1)
+
+            if tokens_c:
+                tokens += tokens_c + [tokenizer.sep_token]
+                segment_ids += [0] * (len(tokens_c) + 1)
 
         input_ids = tokenizer.convert_tokens_to_ids(tokens)
 
@@ -282,4 +304,34 @@ def _truncate_seq_pair(tokens_a, tokens_b, max_length):
         else:
             removed_tokens_b.append(tokens_b.pop())
     return removed_tokens_a, removed_tokens_b
+
+
+def _truncate_seq_triplet(tokens_a, tokens_b, tokens_c, max_length):
+    """
+    Truncates a sequence triplet in place to the maximum length
+    :param tokens_a:
+    :param tokens_b:
+    :param tokens_c:
+    :param max_length:
+    :return:
+    """
+
+    # This is a simple heuristic which will always truncate the longer sequence
+    # one token at a time. This makes more sense than truncating an equal percent
+    # of tokens from each, since if one sequence is very short then each token
+    # that's truncated likely contains more information than a longer sequence.
+    removed_tokens_a = []
+    removed_tokens_b = []
+    removed_tokens_c = []
+    while True:
+        total_length = len(tokens_a) + len(tokens_b) +  len(tokens_c)
+        if total_length <= max_length:
+            break
+        if len(tokens_a) > len(tokens_b) and len(tokens_a) > len(tokens_c):
+            removed_tokens_a.append(tokens_a.pop())
+        elif len(tokens_b) > len(tokens_a) and len(tokens_b) > len(tokens_c):
+            removed_tokens_b.append(tokens_b.pop())
+        else:
+            removed_tokens_c.append(tokens_c.pop())
+    return removed_tokens_a, removed_tokens_b, removed_tokens_c
 
