@@ -9,6 +9,7 @@ class CongressionalHearingProcessor(BertProcessor):
 
     def __init__(self, config=None):
         super().__init__()
+        self.column_text_a = config.first_input_column
         self.use_text_b = config.use_second_input
         self.column_text_b = config.second_input_column
         self.use_text_c = config.use_third_input
@@ -38,8 +39,8 @@ class CongressionalHearingProcessor(BertProcessor):
             if i == 0:
                 continue
             guid = line[0]
-            text_a = line[2]
             label = line[1]
+            text_a = line[self.column_text_a]
             if self.use_text_b:
                 text_b = line[self.column_text_b]
                 if self.use_text_c:
