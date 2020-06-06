@@ -38,6 +38,11 @@ class BertTrainer(object):
         self.best_dev_f1, self.unimproved_iters = 0, 0
         self.early_stop = False
 
+        self.initial_tr_loss = float("inf")
+        self.minimum_loss_percent_decrease = 0.4
+        self.patience_training = 10
+        self.training_converged = True
+
     def train_epoch(self, train_dataloader):
         self.tr_loss = 0
         for step, batch in enumerate(tqdm(train_dataloader, desc="Training")):
@@ -125,6 +130,8 @@ class BertTrainer(object):
         for epoch in trange(int(self.args.epochs), desc="Epoch"):
             self.train_epoch(train_dataloader)
             print('Train loss: ', self.tr_loss)
+            if epoch == 0:
+                self.initial_tr_loss = self.tr_loss
             if self.args.evaluate_dev:
                 dev_evaluator = BertEvaluator(self.model, self.processor, self.tokenizer, self.args, split='dev')
                 dev_precision, dev_recall, dev_f1, dev_acc, dev_loss = dev_evaluator.get_scores()[0][:5]
@@ -145,6 +152,14 @@ class BertTrainer(object):
                     if self.unimproved_iters >= self.args.patience:
                         self.early_stop = True
                         tqdm.write("Early Stopping. Epoch: {}, Best Dev F1: {}".format(epoch, self.best_dev_f1))
+                        break
+            if self.args.evaluate_test:
+                if epoch == self.patience_training:
+                    loss_percent = (self.initial_tr_loss-self.tr_loss)/self.initial_tr_loss
+                    if loss_percent <= self.minimum_loss_percent_decrease:
+                        self.training_converged = False
+                        tqdm.write("Training failed to converge. Epoch: {}, Loss percent: {}"
+                                   .format(epoch, loss_percent))
                         break
         end_time = time.monotonic()
 

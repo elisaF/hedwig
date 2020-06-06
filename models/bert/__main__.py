@@ -99,7 +99,8 @@ def run_main(args):
     args.num_labels = dataset_map[args.dataset].NUM_CLASSES
     args.is_multilabel = dataset_map[args.dataset].IS_MULTILABEL
     args.is_hierarchical = False
-
+    train_successful = True
+    
     processor = dataset_map[args.dataset](args)
 
     if not args.trained_model:
@@ -182,10 +183,13 @@ def run_main(args):
         model.load_state_dict(state)
         model = model.to(device)
 
-    if args.evaluate_dev:
-        evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
-    if args.evaluate_test:
-        evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
+    if trainer.training_converged:
+        if args.evaluate_dev:
+            evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
+        if args.evaluate_test:
+            evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
+        
+    return trainer.training_converged
 
 
 if __name__ == '__main__':

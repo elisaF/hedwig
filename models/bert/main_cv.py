@@ -14,8 +14,11 @@ if __name__ == '__main__':
         args.fold_num = fold
         if orig_metrics_json:
             args.metrics_json = orig_metrics_json + '_fold' + str(fold)
-        run_main(args)
-
+        training_converged = run_main(args)
+        if not training_converged:
+            args.seed += 10
+            print('Rerunning fold', fold, 'with new seed', args.seed)
+            run_main(args)
     # summarize fold results and save to file
     process_json_results(orig_metrics_json, orig_metrics_json+'_summary.tsv', 'test')
 
