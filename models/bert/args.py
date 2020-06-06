@@ -55,5 +55,6 @@ def get_args():
     parser.add_argument('--second-input-column', type=int, default=3)
     parser.add_argument('--use-third-input', action='store_true')
     parser.add_argument('--third-input-column', type=int, default=12)
+    parser.add_argument('--num_train_restarts', type=int, default=3)
     args = parser.parse_args()
     return args
