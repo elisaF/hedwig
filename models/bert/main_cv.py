@@ -13,12 +13,12 @@ if __name__ == '__main__':
         print('On fold', str(fold))
         num_train_restarts = 0
         args.fold_num = fold
+        orig_seed = args.seed
         if orig_metrics_json:
             args.metrics_json = orig_metrics_json + '_fold' + str(fold)
         training_converged = run_main(args)
         while not training_converged and num_train_restarts < args.num_train_restarts:
             num_train_restarts += 1
-            orig_seed = args.seed
             args.seed += 10
             print('Rerunning fold', fold, 'with new seed', args.seed)
             run_main(args)
