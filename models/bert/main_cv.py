@@ -21,7 +21,7 @@ if __name__ == '__main__':
             num_train_restarts += 1
             args.seed += 10
             print('Rerunning fold', fold, 'with new seed', args.seed)
-            run_main(args)
+            training_converged = run_main(args)
         args.seed = orig_seed
     # summarize fold results and save to file
     process_json_results(orig_metrics_json, orig_metrics_json+'_summary.tsv', 'test')
