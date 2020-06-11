@@ -33,7 +33,7 @@ class BertEvaluator(object):
                 self.eval_examples, self.args.max_seq_length, self.tokenizer)
         else:
             eval_features = convert_examples_to_features(
-                self.eval_examples, self.args.max_seq_length, self.tokenizer, use_guid=True)
+                self.eval_examples, self.args.max_seq_length, self.tokenizer, use_guid=True, is_multilabel=self.args.is_multilabel)
 
         unpadded_input_ids = [f.input_ids for f in eval_features]
         unpadded_input_mask = [f.input_mask for f in eval_features]
