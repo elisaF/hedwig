@@ -188,7 +188,7 @@ def run_main(args):
             evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
         if args.evaluate_test:
             evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
-        
+
     return trainer.training_converged
 
 
