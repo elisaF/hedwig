@@ -20,4 +20,5 @@ def get_args():
     parser.add_argument('--binary-label', default='answer')
     parser.add_argument('--num-folds', type=int, default=4)
     parser.add_argument('--fold-num', type=int, default=-1)
+    parser.add_argument('--is-categorical', action='store_true')
     return parser
