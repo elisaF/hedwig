@@ -47,7 +47,10 @@ class BertEvaluator(object):
         padded_input_ids = torch.tensor(unpadded_input_ids, dtype=torch.long)
         padded_input_mask = torch.tensor(unpadded_input_mask, dtype=torch.long)
         padded_segment_ids = torch.tensor(unpadded_segment_ids, dtype=torch.long)
-        label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.long)
+        if self.args.is_regression:
+            label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.float)
+        else:
+            label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.long)
         doc_ids = torch.tensor([f.guid for f in eval_features], dtype=torch.long)
 
         eval_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids, doc_ids)
@@ -109,57 +112,69 @@ class BertEvaluator(object):
             nb_eval_examples += input_ids.size(0)
             nb_eval_steps += 1
 
-        predicted_label_sets = [predicted_label.tolist() for predicted_label in predicted_labels]
-        target_label_sets = [target_label.tolist() for target_label in target_labels]
-
-        hamming_loss = metrics.hamming_loss(target_labels, predicted_labels)
-
-        predicted_labels, target_labels = np.array(predicted_labels), np.array(target_labels)
-        cm = metrics.multilabel_confusion_matrix(target_labels, predicted_labels)
-        accuracy = metrics.accuracy_score(target_labels, predicted_labels)
-
-        if self.args.num_labels == 2:
-            precision = metrics.precision_score(target_labels, predicted_labels, average='binary')
-            recall = metrics.recall_score(target_labels, predicted_labels, average='binary')
-            f1 = metrics.f1_score(target_labels, predicted_labels, average='binary')
-        else:
-            precision_micro = metrics.precision_score(target_labels, predicted_labels, average='micro')
-            recall_micro = metrics.recall_score(target_labels, predicted_labels, average='micro')
-            f1_micro = metrics.f1_score(target_labels, predicted_labels, average='micro')
-
-            precision_macro = metrics.precision_score(target_labels, predicted_labels, average='macro')
-            recall_macro = metrics.recall_score(target_labels, predicted_labels, average='macro')
-            f1_macro = metrics.f1_score(target_labels, predicted_labels, average='macro')
-
-            precision_class, recall_class, f1_class, support_class = metrics.precision_recall_fscore_support(
-                target_labels,
-                predicted_labels)
         avg_loss = total_loss / nb_eval_steps
 
-        if self.args.num_labels == 2:
-            score_values = [precision, recall, f1,
-                            accuracy,
+        if self.args.is_regression:
+            rmse = np.sqrt(metrics.mean_squared_error(target_labels, predicted_labels))
+
+            score_values = [rmse,
                             avg_loss,
-                            hamming_loss,
-                            cm.tolist(), list(zip(target_doc_ids, target_label_sets, predicted_label_sets))]
-            score_names = ['precision', 'recall', 'f1',
-                           'accuracy',
+                            list(zip(target_doc_ids, target_labels, predicted_labels))]
+            score_names = ['rmse',
                            'avg_loss',
-                           'hamming_loss',
-                           'confusion_matrix', 'label_set_info (id/gold/pred)']
+                           'label_set_info (id/gold/pred)']
+
         else:
-            score_values = [precision_macro, recall_macro, f1_macro,
-                            accuracy,
-                            avg_loss,
-                            hamming_loss,
-                            precision_micro, recall_micro, f1_micro,
-                            precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
-                            cm.tolist(), list(zip(target_doc_ids, target_label_sets, predicted_label_sets))]
-            score_names = ['precision_macro', 'recall_macro', 'f1_macro',
-                           'accuracy',
-                           'avg_loss',
-                           'hamming_loss',
-                           'precision_micro', 'recall_micro', 'f1_micro',
-                           'precision_class', 'recall_class', 'f1_class', 'support_class',
-                           'confusion_matrix', 'label_set_info (id/gold/pred)']
+            hamming_loss = metrics.hamming_loss(target_labels, predicted_labels)
+
+            predicted_labels, target_labels = np.array(predicted_labels), np.array(target_labels)
+            cm = metrics.multilabel_confusion_matrix(target_labels, predicted_labels)
+            accuracy = metrics.accuracy_score(target_labels, predicted_labels)
+
+            if self.args.num_labels == 2:
+                precision = metrics.precision_score(target_labels, predicted_labels, average='binary')
+                recall = metrics.recall_score(target_labels, predicted_labels, average='binary')
+                f1 = metrics.f1_score(target_labels, predicted_labels, average='binary')
+            else:
+                precision_micro = metrics.precision_score(target_labels, predicted_labels, average='micro')
+                recall_micro = metrics.recall_score(target_labels, predicted_labels, average='micro')
+                f1_micro = metrics.f1_score(target_labels, predicted_labels, average='micro')
+
+                precision_macro = metrics.precision_score(target_labels, predicted_labels, average='macro')
+                recall_macro = metrics.recall_score(target_labels, predicted_labels, average='macro')
+                f1_macro = metrics.f1_score(target_labels, predicted_labels, average='macro')
+
+                precision_class, recall_class, f1_class, support_class = metrics.precision_recall_fscore_support(
+                    target_labels,
+                    predicted_labels)
+
+            predicted_label_sets = [predicted_label.tolist() for predicted_label in predicted_labels]
+            target_label_sets = [target_label.tolist() for target_label in target_labels]
+
+            if self.args.num_labels == 2:
+                score_values = [precision, recall, f1,
+                                accuracy,
+                                avg_loss,
+                                hamming_loss,
+                                cm.tolist(), list(zip(target_doc_ids, target_label_sets, predicted_label_sets))]
+                score_names = ['precision', 'recall', 'f1',
+                               'accuracy',
+                               'avg_loss',
+                               'hamming_loss',
+                               'confusion_matrix', 'label_set_info (id/gold/pred)']
+            else:
+                score_values = [precision_macro, recall_macro, f1_macro,
+                                accuracy,
+                                avg_loss,
+                                hamming_loss,
+                                precision_micro, recall_micro, f1_micro,
+                                precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
+                                cm.tolist(), list(zip(target_doc_ids, target_label_sets, predicted_label_sets))]
+                score_names = ['precision_macro', 'recall_macro', 'f1_macro',
+                               'accuracy',
+                               'avg_loss',
+                               'hamming_loss',
+                               'precision_micro', 'recall_micro', 'f1_micro',
+                               'precision_class', 'recall_class', 'f1_class', 'support_class',
+                               'confusion_matrix', 'label_set_info (id/gold/pred)']
         return score_values, score_names

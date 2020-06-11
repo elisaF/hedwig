@@ -31,11 +31,14 @@ class BertTrainer(object):
         self.num_train_optimization_steps = int(
             len(self.train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
 
-        self.log_header = 'Epoch Iteration Progress   Dev/Acc.  Dev/Pr.  Dev/Re.   Dev/F1   Dev/Loss'
-        self.log_template = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f} {:>6.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
+        self.log_header_f1 = 'Epoch Iteration Progress   Dev/Acc.  Dev/Pr.  Dev/Re.   Dev/F1   Dev/Loss'
+        self.log_template_f1 = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f} {:>6.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
+
+        self.log_header_rmse = 'Epoch Iteration Progress   Dev/RMSE   Dev/Loss'
+        self.log_template_rmse = ' '.join('{:8.4f},{:10.4f}'.split(','))
 
         self.iterations, self.nb_tr_steps, self.tr_loss = 0, 0, 0
-        self.best_dev_f1, self.unimproved_iters = 0, 0
+        self.best_dev_metric, self.unimproved_iters = 0, 0
         self.early_stop = False
 
         self.initial_tr_loss = float("inf")
@@ -124,7 +127,11 @@ class BertTrainer(object):
         padded_input_ids = torch.tensor(unpadded_input_ids, dtype=torch.long)
         padded_input_mask = torch.tensor(unpadded_input_mask, dtype=torch.long)
         padded_segment_ids = torch.tensor(unpadded_segment_ids, dtype=torch.long)
-        label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
+
+        if self.args.is_regression:
+            label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.float)
+        else:
+            label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
 
         train_data = TensorDataset(padded_input_ids, padded_input_mask, padded_segment_ids, label_ids)
 
@@ -140,24 +147,41 @@ class BertTrainer(object):
                 self.initial_tr_loss = self.tr_loss
             if self.args.evaluate_dev:
                 dev_evaluator = BertEvaluator(self.model, self.processor, self.tokenizer, self.args, split='dev')
-                dev_precision, dev_recall, dev_f1, dev_acc, dev_loss = dev_evaluator.get_scores()[0][:5]
+                dev_scores = dev_evaluator.get_scores()[0]
 
-                # Print validation results
-                tqdm.write(self.log_header)
-                tqdm.write(self.log_template.format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
-                                                    dev_acc, dev_precision, dev_recall, dev_f1, dev_loss))
+                if self.args.is_regression:
+                    dev_rmse, dev_loss = dev_scores
+
+                    dev_metric = dev_rmse
+                    dev_metric_name = 'RMSE'
+
+                    # Print validation results
+                    tqdm.write(self.log_header_rmse)
+                    tqdm.write(self.log_template_rmse.format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
+                                                             dev_rmse, dev_loss))
+
+                else:
+                    dev_precision, dev_recall, dev_f1, dev_acc, dev_loss = dev_scores[:5]
+
+                    dev_metric = dev_f1
+                    dev_metric_name = 'F1'
+
+                    # Print validation results
+                    tqdm.write(self.log_header_f1)
+                    tqdm.write(self.log_template_f1.format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
+                                                        dev_acc, dev_precision, dev_recall, dev_f1, dev_loss))
 
                 # Update validation results
-                if dev_f1 > self.best_dev_f1:
+                if dev_metric > self.best_dev_metric:
                     self.unimproved_iters = 0
-                    self.best_dev_f1 = dev_f1
+                    self.best_dev_metric = dev_metric
                     torch.save(self.model, self.snapshot_path)
 
                 else:
                     self.unimproved_iters += 1
                     if self.unimproved_iters >= self.args.patience:
                         self.early_stop = True
-                        tqdm.write("Early Stopping. Epoch: {}, Best Dev F1: {}".format(epoch, self.best_dev_f1))
+                        tqdm.write("Early Stopping. Epoch: {}, Best Dev {}: {}".format(epoch, dev_metric_name, self.best_dev_metric))
                         break
             if self.args.evaluate_test:
                 if epoch == self.patience_training:
