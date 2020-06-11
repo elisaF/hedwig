@@ -71,8 +71,13 @@ class BertTrainer(object):
                 if self.args.num_labels > 2:
                     loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))
                 else:
-                    criterion = torch.nn.CrossEntropyLoss()
-                    loss = criterion(logits.view(-1, self.args.num_labels), label_ids.view(-1))
+                    if self.args.loss == 'cross-entropy':
+                        criterion = torch.nn.CrossEntropyLoss()
+                        loss = criterion(logits.view(-1, self.args.num_labels), label_ids.view(-1))
+                    elif self.args.loss == 'mse' or self.args.is_regression:
+                        criterion = torch.nn.MSELoss()
+                        criterion = criterion.to(self.args.device)
+                        loss = criterion(logits, label_ids.float())
             if self.args.n_gpu > 1:
                 loss = loss.mean()
             if self.args.gradient_accumulation_steps > 1:
