@@ -95,11 +95,10 @@ class BertEvaluator(object):
                 if self.args.num_labels > 2:
                     loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))
                 else:
-                    if self.args.loss == 'mse' or self.args.is_regression:
-                        criterion = torch.nn.MSELoss(size_average=False)
-                        m = torch.nn.Sigmoid()
-                        loss = criterion(m(logits.cpu()), label_ids.float().cpu())
-                    elif self.args.loss == 'cross-entropy':
+                    if self.args.is_regression:
+                        criterion = torch.nn.MSELoss()
+                        loss = criterion(logits.view(-1).cpu(), label_ids.view(-1).cpu())
+                    else:
                         loss_fct = torch.nn.CrossEntropyLoss()
                         loss = loss_fct(logits.view(-1, self.args.num_labels), label_ids.view(-1))
 

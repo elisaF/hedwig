@@ -74,11 +74,10 @@ class BertTrainer(object):
                 if self.args.num_labels > 2:
                     loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))
                 else:
-                    if self.args.loss == 'mse' or self.args.is_regression:
+                    if self.args.is_regression:
                         criterion = torch.nn.MSELoss()
-                        criterion = criterion.to(self.args.device)
-                        loss = criterion(logits, label_ids.float())
-                    elif self.args.loss == 'cross-entropy':
+                        loss = criterion(logits.view(-1), label_ids.view(-1))
+                    else:
                         criterion = torch.nn.CrossEntropyLoss()
                         loss = criterion(logits.view(-1, self.args.num_labels), label_ids.view(-1))
 
