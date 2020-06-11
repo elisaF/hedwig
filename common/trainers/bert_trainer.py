@@ -172,7 +172,8 @@ class BertTrainer(object):
                                                         dev_acc, dev_precision, dev_recall, dev_f1, dev_loss))
 
                 # Update validation results
-                if dev_metric > self.best_dev_metric:
+                dev_improved = check_dev_improved(dev_metric)
+                if dev_improved:
                     self.unimproved_iters = 0
                     self.best_dev_metric = dev_metric
                     torch.save(self.model, self.snapshot_path)
@@ -199,3 +200,9 @@ class BertTrainer(object):
             torch.save(self.model, self.snapshot_path)
         print('End training: ', datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         print('Time elapsed: ', end_time-start_time)
+
+    def check_dev_improved(self, dev_metric):
+        if self.args.is_regression:
+            return dev_metric < self.best_dev_metric
+        else:
+            return dev_metric > self.best_dev_metric
