@@ -150,7 +150,7 @@ class BertTrainer(object):
                 dev_scores = dev_evaluator.get_scores()[0]
 
                 if self.args.is_regression:
-                    dev_rmse, dev_loss = dev_scores
+                    dev_rmse, dev_loss = dev_scores[:2]
 
                     dev_metric = dev_rmse
                     dev_metric_name = 'RMSE'
