@@ -97,7 +97,7 @@ class BertProcessor(object):
             return lines
 
 
-def convert_examples_to_features(examples, max_seq_length, tokenizer, print_examples=False, use_guid=False, is_multilabel=True):
+def convert_examples_to_features(examples, max_seq_length, tokenizer, print_examples=False, use_guid=False, is_categorical=True):
     """
     Loads a data file into a list of InputBatch objects
     :param examples:
@@ -193,10 +193,10 @@ def convert_examples_to_features(examples, max_seq_length, tokenizer, print_exam
         assert len(input_ids) == max_seq_length
         assert len(input_mask) == max_seq_length
         assert len(segment_ids) == max_seq_length
-        if is_multilabel:
+        if is_categorical:
             label_id = [float(x) for x in example.label]
         else:
-            label_id = [float(example.label)]
+            label_id = float(example.label)
 
         if print_examples and ex_index < 5:
             print("tokens: %s" % " ".join([str(x) for x in tokens]))

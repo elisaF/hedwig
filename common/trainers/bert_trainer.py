@@ -100,7 +100,7 @@ class BertTrainer(object):
                 self.train_examples, self.args.max_seq_length, self.tokenizer)
         else:
             train_features = convert_examples_to_features(
-                self.train_examples, self.args.max_seq_length, self.tokenizer, use_guid=True, is_multilabel=self.args.is_multilabel)
+                self.train_examples, self.args.max_seq_length, self.tokenizer, use_guid=True, is_categorical=self.args.is_categorical)
 
         unpadded_input_ids = [f.input_ids for f in train_features]
         unpadded_input_mask = [f.input_mask for f in train_features]
