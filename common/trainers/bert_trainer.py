@@ -172,7 +172,7 @@ class BertTrainer(object):
                                                         dev_acc, dev_precision, dev_recall, dev_f1, dev_loss))
 
                 # Update validation results
-                dev_improved = check_dev_improved(dev_metric)
+                dev_improved = self.check_dev_improved(dev_metric)
                 if dev_improved:
                     self.unimproved_iters = 0
                     self.best_dev_metric = dev_metric
