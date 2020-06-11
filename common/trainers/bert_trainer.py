@@ -35,7 +35,7 @@ class BertTrainer(object):
         self.log_template_f1 = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f} {:>6.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
 
         self.log_header_rmse = 'Epoch Iteration Progress   Dev/RMSE   Dev/Loss'
-        self.log_template_rmse = ' '.join('{:8.4f},{:10.4f}'.split(','))
+        self.log_template_rmse = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f},{:8.4f},{:10.4f}'.split(','))
 
         self.iterations, self.nb_tr_steps, self.tr_loss = 0, 0, 0
         self.best_dev_metric, self.unimproved_iters = 0, 0
