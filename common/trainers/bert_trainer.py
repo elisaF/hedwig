@@ -38,7 +38,11 @@ class BertTrainer(object):
         self.log_template_rmse = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f},{:8.4f},{:10.4f}'.split(','))
 
         self.iterations, self.nb_tr_steps, self.tr_loss = 0, 0, 0
-        self.best_dev_metric, self.unimproved_iters = 0, 0
+        self.unimproved_iters = 0
+        if self.args.is_regression:
+            self.best_dev_metric = float('inf')
+        else:
+            self.best_dev_metric = 0
         self.early_stop = False
 
         self.initial_tr_loss = float("inf")
