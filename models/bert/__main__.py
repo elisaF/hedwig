@@ -96,11 +96,14 @@ def run_main(args):
     args.batch_size = args.batch_size // args.gradient_accumulation_steps
     args.device = device
     args.n_gpu = n_gpu
-    args.num_labels = dataset_map[args.dataset].NUM_CLASSES
-    args.is_multilabel = dataset_map[args.dataset].IS_MULTILABEL
+    if args.is_regression:
+        args.num_labels = 1
+        args.is_multilabel = False
+    else:
+        args.num_labels = dataset_map[args.dataset].NUM_CLASSES
+        args.is_multilabel = dataset_map[args.dataset].IS_MULTILABEL
     args.is_hierarchical = False
-    train_successful = True
-    
+
     processor = dataset_map[args.dataset](args)
 
     if not args.trained_model:
