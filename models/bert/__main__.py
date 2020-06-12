@@ -30,9 +30,14 @@ from models.bert.args import get_args
 def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
     evaluator = BertEvaluator(model, processor, tokenizer, args, split)
     scores, score_names = evaluator.get_scores(silent=True)
-    precision, recall, f1, accuracy, avg_loss = scores[:5]
-    print('\n' + LOG_HEADER)
-    print(LOG_TEMPLATE.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
+    if args.is_regression:
+        rmse, avg_loss = scores[:2]
+        print('\n' + LOG_HEADER_REG)
+        print(LOG_TEMPLATE_REG.format(split.upper(), rmse, avg_loss))
+    else:
+        precision, recall, f1, accuracy, avg_loss = scores[:5]
+        print('\n' + LOG_HEADER_CLASS)
+        print(LOG_TEMPLATE_CLASS.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
 
     scores_dict = dict(zip(score_names, scores))
     with open(save_file, 'w') as f:
