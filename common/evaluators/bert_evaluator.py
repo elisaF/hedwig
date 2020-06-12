@@ -116,13 +116,15 @@ class BertEvaluator(object):
             nb_eval_steps += 1
 
         avg_loss = total_loss / nb_eval_steps
+        predicted_label_sets = [predicted_label.tolist() for predicted_label in predicted_labels]
+        target_label_sets = [target_label.tolist() for target_label in target_labels]
 
         if self.args.is_regression:
             rmse = np.sqrt(metrics.mean_squared_error(target_labels, predicted_labels))
 
-            score_values = [rmse,
+            score_values = [rmse.tolist(),
                             avg_loss,
-                            list(zip(target_doc_ids, target_labels, predicted_labels))]
+                            list(zip(target_doc_ids, target_label_sets, predicted_label_sets))]
             score_names = ['rmse',
                            'avg_loss',
                            'label_set_info (id/gold/pred)']
@@ -150,9 +152,6 @@ class BertEvaluator(object):
                 precision_class, recall_class, f1_class, support_class = metrics.precision_recall_fscore_support(
                     target_labels,
                     predicted_labels)
-
-            predicted_label_sets = [predicted_label.tolist() for predicted_label in predicted_labels]
-            target_label_sets = [target_label.tolist() for target_label in target_labels]
 
             if self.args.num_labels == 2:
                 score_values = [precision, recall, f1,
