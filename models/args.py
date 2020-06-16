@@ -17,8 +17,13 @@ def get_args():
     parser.add_argument('--metrics-json', type=str, default='metrics.json')
     parser.add_argument('--evaluate-test', action='store_true')
     parser.add_argument('--evaluate-dev', action='store_true')
+    parser.add_argument('--evaluate-train', action='store_true')
     parser.add_argument('--binary-label', default='answer')
     parser.add_argument('--num-folds', type=int, default=4)
     parser.add_argument('--fold-num', type=int, default=-1)
     parser.add_argument('--is-regression', action='store_true')
+    parser.add_argument('--eval-metric', type=str, default='F1_MACRO',
+                        choices=['F1_MACRO', 'F1_BINARY', 'PEARSON', 'SPEARMAN',
+                                 'PEARSON_SPEARMAN'])
+
     return parser

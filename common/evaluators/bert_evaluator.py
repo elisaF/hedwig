@@ -1,8 +1,11 @@
+from common.constants import *
+
 import warnings
 
 import numpy as np
 import torch
 import torch.nn.functional as F
+from scipy.stats import pearsonr, spearmanr
 from sklearn import metrics
 from torch.utils.data import DataLoader, SequentialSampler, TensorDataset
 from tqdm import tqdm
@@ -120,12 +123,18 @@ class BertEvaluator(object):
         target_label_sets = [target_label.tolist() for target_label in target_labels]
 
         if self.args.is_regression:
-            rmse = np.sqrt(metrics.mean_squared_error(target_labels, predicted_labels))
 
+            rmse, pearson, spearman, pearson_spearman = evaluate_for_regression(target_labels, predicted_labels)
             score_values = [rmse.tolist(),
+                            pearson.tolist(),
+                            spearman.tolist(),
+                            pearson_spearman.tolist(),
                             avg_loss,
                             list(zip(target_doc_ids, target_label_sets, predicted_label_sets))]
-            score_names = ['rmse',
+            score_names = [METRIC_RMSE,
+                           METRIC_PEARSON,
+                           METRIC_SPEARMAN,
+                           METRIC_PEARSON_SPEARMAN,
                            'avg_loss',
                            'label_set_info (id/gold/pred)']
 
@@ -139,15 +148,14 @@ class BertEvaluator(object):
             if self.args.num_labels == 2:
                 precision = metrics.precision_score(target_labels, predicted_labels, average='binary')
                 recall = metrics.recall_score(target_labels, predicted_labels, average='binary')
-                f1 = metrics.f1_score(target_labels, predicted_labels, average='binary')
+                f1 = evaluate_with_metric(target_labels, predicted_labels, METRIC_F1_BINARY)
             else:
                 precision_micro = metrics.precision_score(target_labels, predicted_labels, average='micro')
                 recall_micro = metrics.recall_score(target_labels, predicted_labels, average='micro')
                 f1_micro = metrics.f1_score(target_labels, predicted_labels, average='micro')
-
+                f1_macro = evaluate_with_metric(target_labels, predicted_labels, METRIC_F1_MACRO)
                 precision_macro = metrics.precision_score(target_labels, predicted_labels, average='macro')
                 recall_macro = metrics.recall_score(target_labels, predicted_labels, average='macro')
-                f1_macro = metrics.f1_score(target_labels, predicted_labels, average='macro')
 
                 precision_class, recall_class, f1_class, support_class = metrics.precision_recall_fscore_support(
                     target_labels,
@@ -180,3 +188,28 @@ class BertEvaluator(object):
                                'precision_class', 'recall_class', 'f1_class', 'support_class',
                                'confusion_matrix', 'label_set_info (id/gold/pred)']
         return score_values, score_names
+
+
+def evaluate_with_metric(golds, preds, metric_name):
+    if metric_name == METRIC_RMSE:
+        return np.sqrt(metrics.mean_squared_error(golds, preds))
+    elif metric_name == METRIC_F1_MACRO:
+        return metrics.f1_score(golds, preds, average='macro')
+    elif metric_name == METRIC_F1_BINARY:
+        return metrics.f1_score(golds, preds, average='binary')
+    elif metric_name == METRIC_PEARSON:
+        return pearsonr(golds, preds)[0]
+    elif metric_name == METRIC_SPEARMAN:
+        return spearmanr(golds, preds)[0]
+    elif metric_name == METRIC_PEARSON_SPEARMAN:
+        r = pearsonr(golds, preds)[0]
+        rho = spearmanr(golds, preds)[0]
+        return (r+rho)/2
+
+
+def evaluate_for_regression(golds, preds):
+    rmse = evaluate_with_metric(golds, preds, METRIC_RMSE)
+    pearson = evaluate_with_metric(golds, preds, METRIC_PEARSON)
+    spearman = evaluate_with_metric(golds, preds, METRIC_SPEARMAN)
+    pearson_spearman = evaluate_with_metric(target_labels, preds, METRIC_PEARSON_SPEARMAN)
+    return rmse, pearson, spearman, pearson_spearman

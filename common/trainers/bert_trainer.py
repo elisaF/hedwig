@@ -8,7 +8,8 @@ from torch.utils.data import DataLoader, RandomSampler, TensorDataset
 from tqdm import tqdm
 from tqdm import trange
 
-from common.evaluators.bert_evaluator import BertEvaluator
+from common.constants import *
+from common.evaluators.bert_evaluator import BertEvaluator, evaluate_for_regression, evaluate_with_metric
 from datasets.bert_processors.abstract_processor import convert_examples_to_features
 from datasets.bert_processors.abstract_processor import convert_examples_to_hierarchical_features
 from utils.optimization import warmup_linear
@@ -31,15 +32,15 @@ class BertTrainer(object):
         self.num_train_optimization_steps = int(
             len(self.train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
 
-        self.log_header_f1 = 'Epoch Iteration Progress   Dev/Acc.  Dev/Pr.  Dev/Re.   Dev/F1   Dev/Loss'
-        self.log_template_f1 = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f} {:>6.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
+        self.log_header_classification = 'Epoch Iteration Progress   Dev/Acc.  Dev/Pr.  Dev/Re.   Dev/F1   Dev/Loss'
+        self.log_template_classification = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f} {:>6.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
 
-        self.log_header_rmse = 'Epoch Iteration Progress   Dev/RMSE   Dev/Loss'
-        self.log_template_rmse = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f},{:8.4f},{:10.4f}'.split(','))
+        self.log_header_regression = 'Epoch Iteration Progress   Dev/RMSE   Dev/Pearson Dev/Spearman Dev Pearson_Spearman Dev/Loss'
+        self.log_template_regression = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f},{:8.4f},{:8.4f},{:8.4f},,{:8.4f},{:10.4f}'.split(','))
 
         self.iterations, self.nb_tr_steps, self.tr_loss = 0, 0, 0
         self.unimproved_iters = 0
-        if self.args.is_regression:
+        if self.args.eval_metric == METRIC_RMSE:
             self.best_dev_metric = float('inf')
         else:
             self.best_dev_metric = 0
@@ -52,6 +53,7 @@ class BertTrainer(object):
 
     def train_epoch(self, train_dataloader):
         self.tr_loss = 0
+        predicted_labels, target_labels = list(), list()
         for step, batch in enumerate(tqdm(train_dataloader, desc="Training")):
             self.model.train()
             batch = tuple(t.to(self.args.device) for t in batch)
@@ -59,6 +61,8 @@ class BertTrainer(object):
             logits = self.model(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids)[0]
 
             if self.args.is_multilabel:
+                predicted_labels.extend(F.sigmoid(logits).round().long().cpu().detach().numpy())
+                target_labels.extend(label_ids.cpu().detach().numpy())
                 if self.args.loss == 'cross-entropy':
                     if self.args.pos_weights:
                         pos_weights = [float(w) for w in self.args.pos_weights.split(',')]
@@ -76,9 +80,13 @@ class BertTrainer(object):
                     loss = criterion(m(logits), label_ids.float())
             else:
                 if self.args.num_labels > 2:
+                    predicted_labels.extend(torch.argmax(logits, dim=1).cpu().detach().numpy())
+                    target_labels.extend(label_ids.cpu().detach().numpy())
                     loss = F.cross_entropy(logits, torch.argmax(label_ids, dim=1))
                 else:
                     if self.args.is_regression:
+                        predicted_labels.extend(logits.view(-1).cpu().detach().numpy())
+                        target_labels.extend(label_ids.view(-1).cpu().detach().numpy())
                         criterion = torch.nn.MSELoss()
                         loss = criterion(logits.view(-1), label_ids.view(-1))
                     else:
@@ -105,6 +113,10 @@ class BertTrainer(object):
                 self.scheduler.step()
                 self.optimizer.zero_grad()
                 self.iterations += 1
+        if self.args.evaluate_train:
+            rmse, pearson, spearman, pearson_spearman = evaluate_for_regression(target_labels, predicted_labels)
+            print('\t'.join(['Train/RMSE', 'Train/Pearson', 'Train/Spearman', 'Train/Pearson_Spearman', 'Train/Loss']))
+            print('\t'.join([rmse, pearson, spearman, pearson_spearman, self.tr_loss]))
 
     def train(self):
         if self.args.is_hierarchical:
@@ -150,29 +162,25 @@ class BertTrainer(object):
                 self.initial_tr_loss = self.tr_loss
             if self.args.evaluate_dev:
                 dev_evaluator = BertEvaluator(self.model, self.processor, self.tokenizer, self.args, split='dev')
-                dev_scores = dev_evaluator.get_scores()[0]
-
+                dev_scores, dev_score_names = dev_evaluator.get_scores()
+                dev_metric = dev_scores[dev_score_names.index(self.args.eval_metric)]
                 if self.args.is_regression:
-                    dev_rmse, dev_loss = dev_scores[:2]
-
-                    dev_metric = dev_rmse
-                    dev_metric_name = 'RMSE'
+                    dev_rmse, dev_pearson, dev_spearman, dev_pearson_spearman, dev_loss = dev_scores[:5]
 
                     # Print validation results
-                    tqdm.write(self.log_header_rmse)
-                    tqdm.write(self.log_template_rmse.format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
-                                                             dev_rmse, dev_loss))
+                    tqdm.write(self.log_header_regression)
+                    tqdm.write(self.log_template_regression.
+                               format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
+                                      dev_rmse, dev_pearson, dev_spearman, dev_pearson_spearman, dev_loss))
 
                 else:
                     dev_precision, dev_recall, dev_f1, dev_acc, dev_loss = dev_scores[:5]
 
-                    dev_metric = dev_f1
-                    dev_metric_name = 'F1'
-
                     # Print validation results
-                    tqdm.write(self.log_header_f1)
-                    tqdm.write(self.log_template_f1.format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
-                                                        dev_acc, dev_precision, dev_recall, dev_f1, dev_loss))
+                    tqdm.write(self.log_header_classification)
+                    tqdm.write(self.log_template_classification.
+                               format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
+                                      dev_acc, dev_precision, dev_recall, dev_f1, dev_loss))
 
                 # Update validation results
                 dev_improved = self.check_dev_improved(dev_metric)
@@ -185,7 +193,7 @@ class BertTrainer(object):
                     self.unimproved_iters += 1
                     if self.unimproved_iters >= self.args.patience:
                         self.early_stop = True
-                        tqdm.write("Early Stopping. Epoch: {}, Best Dev {}: {}".format(epoch, dev_metric_name, self.best_dev_metric))
+                        tqdm.write("Early Stopping. Epoch: {}, Best Dev {}: {}".format(epoch, self.args.eval_metric, self.best_dev_metric))
                         break
             if self.args.evaluate_test:
                 if epoch == self.patience_training:
@@ -205,7 +213,8 @@ class BertTrainer(object):
         print('Time elapsed: ', end_time-start_time)
 
     def check_dev_improved(self, dev_metric):
-        if self.args.is_regression:
+        # NOTE! This assumes correlations are always positive!
+        if self.args.eval_metric == METRIC_RMSE:
             return dev_metric < self.best_dev_metric
         else:
             return dev_metric > self.best_dev_metric
