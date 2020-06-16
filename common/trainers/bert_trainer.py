@@ -35,7 +35,7 @@ class BertTrainer(object):
         self.log_header_classification = 'Epoch Iteration Progress   Dev/Acc.  Dev/Pr.  Dev/Re.   Dev/F1   Dev/Loss'
         self.log_template_classification = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f} {:>6.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
 
-        self.log_header_regression = 'Epoch Iteration Progress   Dev/RMSE   Dev/Kendall   Dev/Pearson Dev/Spearman Dev/Pearson_Spearman Dev/Loss'
+        self.log_header_regression = 'Epoch Iteration Progress   Dev/RMSE   Dev/Kend.   Dev/Pears. Dev/Spear. Dev/Pears._Spear. Dev/Loss'
         self.log_template_regression = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f},{:8.4f},{:8.4f},{:8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
 
         self.iterations, self.nb_tr_steps, self.tr_loss = 0, 0, 0
