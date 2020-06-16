@@ -31,7 +31,7 @@ def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
     evaluator = BertEvaluator(model, processor, tokenizer, args, split)
     scores, score_names = evaluator.get_scores(silent=True)
     if args.is_regression:
-        rmse, pearson, spearman, pearson_spearman, avg_loss = scores[:5]
+        rmse, kendall, pearson, spearman, pearson_spearman, avg_loss = scores[:6]
         print('\n' + LOG_HEADER_REG)
         print(LOG_TEMPLATE_REG.format(split.upper(), rmse, pearson, spearman, pearson_spearman, avg_loss))
     else:

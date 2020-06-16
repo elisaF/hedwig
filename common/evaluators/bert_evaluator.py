@@ -5,7 +5,7 @@ import warnings
 import numpy as np
 import torch
 import torch.nn.functional as F
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import kendalltau, pearsonr, spearmanr
 from sklearn import metrics
 from torch.utils.data import DataLoader, SequentialSampler, TensorDataset
 from tqdm import tqdm
@@ -124,14 +124,16 @@ class BertEvaluator(object):
 
         if self.args.is_regression:
 
-            rmse, pearson, spearman, pearson_spearman = evaluate_for_regression(target_labels, predicted_labels)
+            rmse, kendall, pearson, spearman, pearson_spearman = evaluate_for_regression(target_labels, predicted_labels)
             score_values = [rmse.tolist(),
+                            kendall.tolist(),
                             pearson.tolist(),
                             spearman.tolist(),
                             pearson_spearman.tolist(),
                             avg_loss,
                             list(zip(target_doc_ids, target_label_sets, predicted_label_sets))]
             score_names = [METRIC_RMSE,
+                           METRIC_KENDALL,
                            METRIC_PEARSON,
                            METRIC_SPEARMAN,
                            METRIC_PEARSON_SPEARMAN,
@@ -193,6 +195,8 @@ class BertEvaluator(object):
 def evaluate_with_metric(golds, preds, metric_name):
     if metric_name == METRIC_RMSE:
         return np.sqrt(metrics.mean_squared_error(golds, preds))
+    elif metric_name == METRIC_KENDALL:
+        return kendalltau(golds, preds)[0]
     elif metric_name == METRIC_F1_MACRO:
         return metrics.f1_score(golds, preds, average='macro')
     elif metric_name == METRIC_F1_BINARY:
@@ -209,7 +213,8 @@ def evaluate_with_metric(golds, preds, metric_name):
 
 def evaluate_for_regression(golds, preds):
     rmse = evaluate_with_metric(golds, preds, METRIC_RMSE)
+    kendall = evaluate_with_metric(golds, preds, METRIC_KENDALL)
     pearson = evaluate_with_metric(golds, preds, METRIC_PEARSON)
     spearman = evaluate_with_metric(golds, preds, METRIC_SPEARMAN)
     pearson_spearman = evaluate_with_metric(golds, preds, METRIC_PEARSON_SPEARMAN)
-    return rmse, pearson, spearman, pearson_spearman
+    return rmse, kendall, pearson, spearman, pearson_spearman

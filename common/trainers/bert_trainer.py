@@ -35,8 +35,8 @@ class BertTrainer(object):
         self.log_header_classification = 'Epoch Iteration Progress   Dev/Acc.  Dev/Pr.  Dev/Re.   Dev/F1   Dev/Loss'
         self.log_template_classification = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f} {:>6.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
 
-        self.log_header_regression = 'Epoch Iteration Progress   Dev/RMSE   Dev/Pearson Dev/Spearman Dev/Pearson_Spearman Dev/Loss'
-        self.log_template_regression = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f},{:8.4f},{:8.4f},{:8.4f},,{:8.4f},{:10.4f}'.split(','))
+        self.log_header_regression = 'Epoch Iteration Progress   Dev/RMSE   Dev/Kendall   Dev/Pearson Dev/Spearman Dev/Pearson_Spearman Dev/Loss'
+        self.log_template_regression = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f},{:8.4f},{:8.4f},{:8.4f},{:8.4f},,{:8.4f},{:10.4f}'.split(','))
 
         self.iterations, self.nb_tr_steps, self.tr_loss = 0, 0, 0
         self.unimproved_iters = 0
@@ -114,9 +114,9 @@ class BertTrainer(object):
                 self.optimizer.zero_grad()
                 self.iterations += 1
         if self.args.evaluate_train:
-            rmse, pearson, spearman, pearson_spearman = evaluate_for_regression(target_labels, predicted_labels)
+            rmse, kendall, pearson, spearman, pearson_spearman = evaluate_for_regression(target_labels, predicted_labels)
             print('\n' + LOG_HEADER_REG)
-            print(LOG_TEMPLATE_REG.format('TRAIN', rmse, pearson, spearman, pearson_spearman, self.tr_loss))
+            print(LOG_TEMPLATE_REG.format('TRAIN', rmse, kendall, pearson, spearman, pearson_spearman, self.tr_loss))
 
     def train(self):
         if self.args.is_hierarchical:
@@ -165,13 +165,13 @@ class BertTrainer(object):
                 dev_scores, dev_score_names = dev_evaluator.get_scores()
                 dev_metric = dev_scores[dev_score_names.index(self.args.eval_metric)]
                 if self.args.is_regression:
-                    dev_rmse, dev_pearson, dev_spearman, dev_pearson_spearman, dev_loss = dev_scores[:5]
+                    dev_rmse, dev_kendall, dev_pearson, dev_spearman, dev_pearson_spearman, dev_loss = dev_scores[:6]
 
                     # Print validation results
                     tqdm.write(self.log_header_regression)
                     tqdm.write(self.log_template_regression.
                                format(epoch + 1, self.iterations, epoch + 1, self.args.epochs,
-                                      dev_rmse, dev_pearson, dev_spearman, dev_pearson_spearman, dev_loss))
+                                      dev_rmse, dev_kendall, dev_pearson, dev_spearman, dev_pearson_spearman, dev_loss))
 
                 else:
                     dev_precision, dev_recall, dev_f1, dev_acc, dev_loss = dev_scores[:5]
