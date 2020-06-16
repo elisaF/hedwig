@@ -6,8 +6,8 @@ BERT_MODELS = ['BERT-Base', 'BERT-Large', 'HBERT-Base', 'HBERT-Large']
 # String templates for logging results
 LOG_HEADER_CLASS = 'Split  Acc.  Pr.  Re.   F1   Loss'
 LOG_TEMPLATE_CLASS = ' '.join('{:>5s},{:>9.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
-LOG_HEADER_REG = 'Split  RMSE  Pears.  Spear.  Pears_Spear   Loss'
-LOG_TEMPLATE_REG = ' '.join('{:>5s},{:8.4f},{:8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
+LOG_HEADER_REG = 'Split  RMSE  Kendall Pears.  Spear.  Pears_Spear   Loss'
+LOG_TEMPLATE_REG = ' '.join('{:>5s},{:8.4f},{:8.4f},{:8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
 
 # Path to pretrained model and vocab files
 MODEL_DATA_DIR = os.path.join(os.pardir, 'hedwig-data', 'models')
