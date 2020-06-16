@@ -211,5 +211,5 @@ def evaluate_for_regression(golds, preds):
     rmse = evaluate_with_metric(golds, preds, METRIC_RMSE)
     pearson = evaluate_with_metric(golds, preds, METRIC_PEARSON)
     spearman = evaluate_with_metric(golds, preds, METRIC_SPEARMAN)
-    pearson_spearman = evaluate_with_metric(target_labels, preds, METRIC_PEARSON_SPEARMAN)
+    pearson_spearman = evaluate_with_metric(golds, preds, METRIC_PEARSON_SPEARMAN)
     return rmse, pearson, spearman, pearson_spearman

@@ -35,7 +35,7 @@ class BertTrainer(object):
         self.log_header_classification = 'Epoch Iteration Progress   Dev/Acc.  Dev/Pr.  Dev/Re.   Dev/F1   Dev/Loss'
         self.log_template_classification = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f} {:>6.4f},{:>8.4f},{:8.4f},{:8.4f},{:10.4f}'.split(','))
 
-        self.log_header_regression = 'Epoch Iteration Progress   Dev/RMSE   Dev/Pearson Dev/Spearman Dev Pearson_Spearman Dev/Loss'
+        self.log_header_regression = 'Epoch Iteration Progress   Dev/RMSE   Dev/Pearson Dev/Spearman Dev/Pearson_Spearman Dev/Loss'
         self.log_template_regression = ' '.join('{:>5.0f},{:>9.0f},{:>6.0f}/{:<5.0f},{:8.4f},{:8.4f},{:8.4f},,{:8.4f},{:10.4f}'.split(','))
 
         self.iterations, self.nb_tr_steps, self.tr_loss = 0, 0, 0
@@ -115,8 +115,8 @@ class BertTrainer(object):
                 self.iterations += 1
         if self.args.evaluate_train:
             rmse, pearson, spearman, pearson_spearman = evaluate_for_regression(target_labels, predicted_labels)
-            print('\t'.join(['Train/RMSE', 'Train/Pearson', 'Train/Spearman', 'Train/Pearson_Spearman', 'Train/Loss']))
-            print('\t'.join([rmse, pearson, spearman, pearson_spearman, self.tr_loss]))
+            print('\n' + LOG_HEADER_REG)
+            print(LOG_TEMPLATE_REG.format('TRAIN', rmse, pearson, spearman, pearson_spearman, self.tr_loss))
 
     def train(self):
         if self.args.is_hierarchical:
