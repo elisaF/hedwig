@@ -126,10 +126,10 @@ class BertEvaluator(object):
 
             rmse, kendall, pearson, spearman, pearson_spearman = evaluate_for_regression(target_labels, predicted_labels)
             score_values = [rmse.tolist(),
-                            kendall.tolist(),
-                            pearson.tolist(),
-                            spearman.tolist(),
-                            pearson_spearman.tolist(),
+                            kendall,
+                            pearson,
+                            spearman,
+                            pearson_spearman,
                             avg_loss,
                             list(zip(target_doc_ids, target_label_sets, predicted_label_sets))]
             score_names = [METRIC_RMSE,
