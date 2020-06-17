@@ -23,7 +23,7 @@ def get_args():
     parser.add_argument('--fold-num', type=int, default=-1)
     parser.add_argument('--is-regression', action='store_true')
     parser.add_argument('--eval-metric', type=str, default='F1_MACRO',
-                        choices=['F1_MACRO', 'F1_BINARY', 'KENDALL', 'PEARSON', 'SPEARMAN',
+                        choices=['RMSE', 'F1_MACRO', 'F1_BINARY', 'KENDALL', 'PEARSON', 'SPEARMAN',
                                  'PEARSON_SPEARMAN'])
 
     return parser
