@@ -39,6 +39,13 @@ class CongressionalHearingProcessor(BertProcessor):
         text_c = None
         for (i, line) in enumerate(lines):
             if i == 0:
+                print('Gold Label: ', line[self.column_label])
+                print('Document Index: ', line[self.column_id])
+                print('First Input: ', line[self.column_text_a])
+                if self.use_text_b:
+                    print('Second Input: ', line[self.column_text_b])
+                    if self.use_text_c:
+                        print('Third Input: ', line[self.column_text_c])
                 continue
             guid = line[self.column_id]
             label = line[self.column_label]
