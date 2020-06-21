@@ -57,7 +57,13 @@ def get_args():
                         type=int,
                         default=3,
                         help='Number of coarse-grained labels.')
+    parser.add_argument('--id-column', type=int, default=0)
+    parser.add_argument('--label-column', type=int, default=1)
+    parser.add_argument('--first-input-column', type=int, default=2)
     parser.add_argument('--use-second-input', action='store_true')
     parser.add_argument('--second-input-column', type=int, default=3)
+    parser.add_argument('--use-third-input', action='store_true')
+    parser.add_argument('--third-input-column', type=int, default=12)
+    parser.add_argument('--num_train_restarts', type=int, default=3)
     args = parser.parse_args()
     return args
