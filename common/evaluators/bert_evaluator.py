@@ -182,7 +182,7 @@ class BertEvaluator(object):
                                 precision_micro, recall_micro, f1_micro,
                                 precision_class.tolist(), recall_class.tolist(), f1_class.tolist(), support_class.tolist(),
                                 cm.tolist(), list(zip(target_doc_ids, target_label_sets, predicted_label_sets))]
-                score_names = ['precision_macro', 'recall_macro', 'f1_macro',
+                score_names = ['precision_macro', 'recall_macro', METRIC_F1_MACRO,
                                'accuracy',
                                'avg_loss',
                                'hamming_loss',
