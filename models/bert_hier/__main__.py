@@ -29,8 +29,8 @@ def evaluate_split(model, processor, tokenizer, args, save_file, split='dev'):
 
 def print_save_scores(scores, score_type, save_file, split):
     precision, recall, f1, accuracy, avg_loss = scores[0][:5]
-    print('\n' + score_type + ': ' + LOG_HEADER)
-    print(LOG_TEMPLATE.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
+    print('\n' + score_type + ': ' + LOG_HEADER_CLASS)
+    print(LOG_TEMPLATE_CLASS.format(split.upper(), accuracy, precision, recall, f1, avg_loss))
 
     scores_dict = dict(zip(scores[1], scores[0]))
     with open(save_file, 'w') as f:
