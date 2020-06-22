@@ -137,10 +137,13 @@ def run_main(args):
     trainer.train()
     model = torch.load(trainer.snapshot_path)
 
-    if args.evaluate_dev:
-        evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
-    if args.evaluate_test:
-        evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
+    if trainer.training_converged:
+        if args.evaluate_dev:
+            evaluate_split(model, processor, tokenizer, args, metrics_dev_json, split='dev')
+        if args.evaluate_test:
+            evaluate_split(model, processor, tokenizer, args, metrics_test_json, split='test')
+
+    return trainer.training_converged
 
 
 if __name__ == '__main__':
