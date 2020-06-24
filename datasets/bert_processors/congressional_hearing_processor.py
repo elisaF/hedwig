@@ -16,6 +16,8 @@ class CongressionalHearingProcessor(BertProcessor):
         self.column_text_b = config.second_input_column
         self.use_text_c = config.use_third_input
         self.column_text_c = config.third_input_column
+        self.use_text_d = config.use_fourth_input
+        self.column_text_d = config.fourth_input_column
         if config and config.fold_num >= 0:
             self.NAME = os.path.join('CongressionalHearingFolds', 'fold'+str(config.fold_num))
         else:
@@ -37,6 +39,7 @@ class CongressionalHearingProcessor(BertProcessor):
         examples = []
         text_b = None
         text_c = None
+        text_d = None
         for (i, line) in enumerate(lines):
             if i == 0:
                 print('Gold Label: ', line[self.column_label])
@@ -46,6 +49,8 @@ class CongressionalHearingProcessor(BertProcessor):
                     print('Second Input: ', line[self.column_text_b])
                     if self.use_text_c:
                         print('Third Input: ', line[self.column_text_c])
+                        if self.use_text_d:
+                            print('Fourth Input: ', line[self.column_text_d])
                 continue
             guid = line[self.column_id]
             label = line[self.column_label]
@@ -54,6 +59,8 @@ class CongressionalHearingProcessor(BertProcessor):
                 text_b = line[self.column_text_b]
                 if self.use_text_c:
                     text_c = line[self.column_text_c]
+                    if self.use_text_d:
+                        text_d = line[self.column_text_d]
             examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=text_b, text_c=text_c, label=label))
+                InputExample(guid=guid, text_a=text_a, text_b=text_b, text_c=text_c, text_d=text_d, label=label))
         return examples
