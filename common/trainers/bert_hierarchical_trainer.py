@@ -158,7 +158,7 @@ class BertHierarchicalTrainer(object):
                     self.unimproved_iters += 1
                     if self.unimproved_iters >= self.args.patience:
                         self.early_stop = True
-                        tqdm.write("Early Stopping. Epoch: {}, Best Dev {}: {}".format(epoch, self.args.eval_metric, self.best_dev_metric))
+                        tqdm.write("Early Stopping. Epoch: {}, Best Dev {}: {}".format(epoch, self.args.eval_metric, self.best_dev_f1))
                         break
             if self.args.evaluate_test:
                 # when evaluating on test, we can't use dev
