@@ -1,3 +1,4 @@
+import torch
 from torch import nn, tanh
 from transformers import BertModel, RobertaModel, XLNetModel
 from transformers.modeling_utils import SequenceSummary
@@ -47,12 +48,21 @@ class BertHierarchical(nn.Module):
 
 class RobertaHierarchical(nn.Module):
 
-    def __init__(self, model_name, num_fine_labels, num_coarse_labels):
+    def __init__(self, model_name, num_fine_labels, num_coarse_labels, use_second_input=False):
         super().__init__()
 
         self.roberta = RobertaModel.from_pretrained(model_name, num_labels=num_fine_labels)
         self.dropout = nn.Dropout(self.roberta.config.hidden_dropout_prob)
         self.classifier = RobertaClassificationHeads(self.roberta.config, num_coarse_labels, num_fine_labels)
+
+        # hacky fix for error in transformers code
+        # that triggers error "Assertion srcIndex < srcSelectDimSize failed"
+        # https://github.com/huggingface/transformers/issues/1538#issuecomment-570260748
+        if use_second_input:
+            self.roberta.config.type_vocab_size = 2
+            single_emb = self.roberta.embeddings.token_type_embeddings
+            self.roberta.embeddings.token_type_embeddings = torch.nn.Embedding(2, single_emb.embedding_dim)
+            self.roberta.embeddings.token_type_embeddings.weight = torch.nn.Parameter(single_emb.weight.repeat([2, 1]))
 
     def forward(
             self,

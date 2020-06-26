@@ -125,7 +125,8 @@ def run_main(args):
             len(train_examples) / args.batch_size / args.gradient_accumulation_steps) * args.epochs
 
     model = model_map[args.model_family](model_name=args.model,
-                                         num_fine_labels=args.num_labels, num_coarse_labels=args.num_coarse_labels)
+                                         num_fine_labels=args.num_labels, num_coarse_labels=args.num_coarse_labels,
+                                         use_second_input=args.use_second_input)
     model.to(device)
 
     # Prepare optimizer
